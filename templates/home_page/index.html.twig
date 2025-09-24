@@ -1,0 +1,635 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}CLOUDROBE - your cosplay in full color{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        
+        .hero-section {
+            height: 100vh;
+            background: linear-gradient(135deg, var(--primary-pink) 0%, var(--secondary-pink) 50%, var(--accent-orange) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .hero-content {
+            z-index: 10;
+            max-width: 800px;
+            padding: 2rem;
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--white), var(--accent-orange));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: heroTitle 2s ease-out;
+            letter-spacing: 2px;
+        }
+
+        @keyframes heroTitle {
+            0% { opacity: 0; transform: translateY(50px) scale(0.8); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .hero-subtitle {
+            font-size: 3rem;
+            color: var(--white);
+            margin-bottom: 2rem;
+            animation: heroSubtitle 2s ease-out 0.5s both;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        @keyframes heroSubtitle {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: ctaButtons 2s ease-out 1s both;
+        }
+
+        @keyframes ctaButtons {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .cta-button {
+            background: var(--accent-orange);
+            color: var(--white);
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 180px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(223, 145, 82, 0.4);
+            color: var(--white);
+        }
+
+        .cta-button-secondary {
+            background: transparent;
+            border: 2px solid var(--white);
+            color: var(--white);
+        }
+
+        .cta-button-secondary:hover {
+            background: var(--white);
+            color: var(--accent-orange);
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 5rem 2rem;
+            background: var(--white);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 3rem;
+            background: linear-gradient(45deg, var(--accent-orange), var(--secondary-pink));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink));
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: scale(0);
+            transition: transform 0.6s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: scale(1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) rotate(2deg);
+            box-shadow: 0 20px 40px rgba(236, 201, 201, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-orange);
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark-text);
+        }
+
+        .feature-card p {
+            color: var(--dark-text);
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* Collections Section */
+        .collections-section {
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, var(--secondary-pink) 0%, var(--primary-pink) 100%);
+        }
+
+        .collections-title {
+            font-size: 3rem;
+            color: var(--white);
+            margin-bottom: 3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .collection-card {
+            background: var(--white);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .collection-card:hover {
+            transform: scale(1.05) rotate(-1deg);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .collection-image {
+            height: 220px;
+            background: linear-gradient(45deg, var(--primary-pink), var(--accent-orange));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collection-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .collection-card:hover .collection-image::before {
+            left: 100%;
+        }
+
+        .collection-info {
+            padding: 1.5rem;
+        }
+
+        .collection-info h3 {
+            margin-bottom: 0.5rem;
+            color: var(--dark-text);
+            font-size: 1.3rem;
+        }
+
+        .collection-price {
+            color: var(--accent-orange);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 4rem 2rem;
+            background: var(--dark-text);
+            color: var(--white);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 2.5rem;
+            color: var(--accent-orange);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .section-title,
+            .collections-title {
+                font-size: 2.2rem;
+            }
+
+            .features-grid,
+            .collections-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-content {
+                padding: 1rem;
+            }
+
+            .features-section,
+            .collections-section {
+                padding: 3rem 1rem;
+            }
+        }
+
+    /*Header */
+        .header {
+            background: #e5a3a3; 
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 2880px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        /* Logo */
+        .logo img {
+            width: 30px; 
+            height: 30px; 
+            object-fit: contain; 
+            border-radius: 8px;
+        }
+
+        .logo-placeholder {
+            width: 30px;
+            height: 30px;
+            background: var(--primary-pink);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+        }
+
+.logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--white); 
+        }
+
+
+        /* Search Bar */
+        .search-container {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-pink);
+        }
+
+        .search-button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-pink);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Navigation */
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--dark-text);
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-pink);
+        }
+
+        .cart-icon {
+            background: var(--accent-orange);
+            color: var(--white);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--primary-pink);
+            color: var(--white);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .header-container {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .search-container {
+                order: 3;
+                width: 100%;
+                max-width: none;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .nav-link {
+                font-size: 0.9rem;
+            }
+        }
+
+
+    </style>
+</head>
+    </style>
+{% endblock %}
+
+{% block body %}
+   
+     
+<body>
+    <header class="header">
+        <div class="header-container">
+           <div class="logo">
+                <img src="{{ asset('images/collections/logo.png') }}">
+                <div class="logo-text">CLOUDROBE</div>
+            </div>
+
+
+            <!-- Search Bar -->
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    placeholder="Search costumes..."
+                >
+                <button class="search-button">🔍</button>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-links">
+                <a href="#" class="nav-link">Shop</a>
+                <a href="#" class="nav-link">Custom</a>
+                <a href="#" class="nav-link">About</a>
+                <div class="cart-icon">
+                    🛒
+                    <span class="cart-badge">nyenye</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">CLOUDROBE</h1>
+            <p class="hero-subtitle">Bring your characters to life in full colors!</p>
+            <div class="cta-buttons">
+                <a href="#collections" class="cta-button">Explore Collection</a>
+                <a href="#custom" class="cta-button cta-button-secondary">Custom Orders</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Collections -->
+    <section class="collections-section" id="collections">
+    <div class="container">
+        <h2 class="collections-title">Featured Collections</h2>
+        <div class="collections-grid">
+            <div class="collection-card">
+                <div class="collection-image">
+                    <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
+                    <div class="collection-overlay">
+                        <span class="collection-category">Vocaloid</span>
+                    </div>
+                </div>
+                <div class="collection-info">
+                    <h3>Vocaloid</h3>
+                    <p class="collection-price">Starting from $9.99</p>
+                </div>
+            </div>
+            
+            <div class="collection-card">
+                <div class="collection-image">
+                    <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
+                    <div class="collection-overlay">
+                        <span class="collection-category">Anime</span>
+                    </div>
+                </div>
+                <div class="collection-info">
+                    <h3>Anime</h3>
+                    <p class="collection-price">Starting from $9.99</p>
+                </div>
+            </div>
+            
+            <div class="collection-card">
+                <div class="collection-image">
+                    <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
+                    <div class="collection-overlay">
+                        <span class="collection-category">Genshin Impact</span>
+                    </div>
+                </div>
+                <div class="collection-info">
+                    <h3>Genshin Impact</h3>
+                    <p class="collection-price">Starting from $9.99</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>10,000+</h3>
+                    <p>Happy Customers</p>
+                </div>
+                <div class="stat-item">
+                    <h3>500+</h3>
+                    <p>Comfortable Fabric</p>
+                </div>
+                <div class="stat-item">
+                    <h3>98%</h3>
+                    <p>Satisfaction Rate</p>
+                </div>
+                <div class="stat-item">
+                    <h3>24/7</h3>
+                    <p>Customer Support</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+{% endblock %}
