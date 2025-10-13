@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }} | Cosplay Store{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary: #e5a3a3;
+            --secondary: #df9152;
+            --accent: #ecc9c9;
+            --dark: #5c3a3a;
+            --light: #fdf6f6;
+        }
+
+        body {
+            background: var(--light);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            border-radius: 0 0 50px 50px;
+            box-shadow: 0 10px 30px rgba(229, 163, 163, 0.4);
+            margin-bottom: 2rem;
+        }
+
+        .hero-section h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .product-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .product-image {
+            flex: 1 1 300px;
+            max-width: 400px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(223,145,82,0.2);
+        }
+
+        .product-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        .product-details {
+            flex: 2 1 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .product-details h2 {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        .product-details p {
+            font-size: 1.1rem;
+            color: #4b3a3a;
+            line-height: 1.6;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin: 1rem 0;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, var(--secondary), #c97642);
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(223,145,82,0.4);
+        }
+
+        .btn-back {
+            background: var(--accent);
+            color: var(--dark);
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background: #f5d7d7;
+        }
+
+        @media (max-width: 768px) {
+            .product-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="hero-section">
+        <h1>{{ product.name }}</h1>
+        <p>Product Details</p>
+    </div>
+
+    <div class="product-container">
+        <div class="product-image">
+            {% if product.image %}
+                <img src="{{ product.image }}" alt="{{ product.name }}">
+            {% else %}
+                <div style="width:100%;height:300px;background:#f5d7d7;display:flex;align-items:center;justify-content:center;font-size:3rem;">🎭</div>
+            {% endif %}
+        </div>
+
+        <div class="product-details">
+            <h2>{{ product.name }}</h2>
+            <p>{{ product.description }}</p>
+            <div class="product-price">₱{{ product.price|number_format(2, '.', ',') }}</div>
+
+            <div class="product-actions">
+                <a href="{{ path('app_products_index') }}" class="btn-back">Back to Products</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

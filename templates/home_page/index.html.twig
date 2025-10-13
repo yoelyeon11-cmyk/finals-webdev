@@ -514,16 +514,12 @@
 {% endblock %}
 
 {% block body %}
-   
-     
 <body>
     <header class="header">
         <div class="header-container">
            <div class="logo">
                 <img src="{{ asset('images/collections/logo.png') }}">
-                <div class="logo-text"></div>
             </div>
-
 
             <!-- Search Bar -->
             <div class="search-container">
@@ -548,6 +544,10 @@
         </div>
     </header>
 
+
+    {# 👇 Only show these sections when there’s NO search query #}
+    {% if query is empty %}
+
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-content">
@@ -562,49 +562,49 @@
 
     <!-- Collections -->
     <section class="collections-section" id="collections">
-    <div class="container">
-        <h2 class="collections-title">Featured Collections</h2>
-        <div class="collections-grid">
-            <div class="collection-card">
-                <div class="collection-image">
-                    <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
-                    <div class="collection-overlay">
-                        <span class="collection-category">Vocaloid</span>
+        <div class="container">
+            <h2 class="collections-title">Featured Collections</h2>
+            <div class="collections-grid">
+                <div class="collection-card">
+                    <div class="collection-image">
+                        <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
+                        <div class="collection-overlay">
+                            <span class="collection-category">Vocaloid</span>
+                        </div>
+                    </div>
+                    <div class="collection-info">
+                        <h3>Vocaloid</h3>
+                        <p class="collection-price">Starting from $9.99</p>
                     </div>
                 </div>
-                <div class="collection-info">
-                    <h3>Vocaloid</h3>
-                    <p class="collection-price">Starting from $9.99</p>
-                </div>
-            </div>
-            
-            <div class="collection-card">
-                <div class="collection-image">
-                    <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
-                    <div class="collection-overlay">
-                        <span class="collection-category">Anime</span>
+                
+                <div class="collection-card">
+                    <div class="collection-image">
+                        <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
+                        <div class="collection-overlay">
+                            <span class="collection-category">Anime</span>
+                        </div>
+                    </div>
+                    <div class="collection-info">
+                        <h3>Anime</h3>
+                        <p class="collection-price">Starting from $9.99</p>
                     </div>
                 </div>
-                <div class="collection-info">
-                    <h3>Anime</h3>
-                    <p class="collection-price">Starting from $9.99</p>
-                </div>
-            </div>
-            
-            <div class="collection-card">
-                <div class="collection-image">
-                    <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
-                    <div class="collection-overlay">
-                        <span class="collection-category">Genshin Impact</span>
+                
+                <div class="collection-card">
+                    <div class="collection-image">
+                        <img src="{{ asset('images/collections/HatsuneMiku.jpg') }}">
+                        <div class="collection-overlay">
+                            <span class="collection-category">Genshin Impact</span>
+                        </div>
                     </div>
-                </div>
-                <div class="collection-info">
-                    <h3>Genshin Impact</h3>
-                    <p class="collection-price">Starting from $9.99</p>
+                    <div class="collection-info">
+                        <h3>Genshin Impact</h3>
+                        <p class="collection-price">Starting from $9.99</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     </section>
 
     <!-- Stats -->
@@ -631,5 +631,67 @@
         </div>
     </section>
 
+    {% endif %}
+    {# 👆 End of homepage-only content #}
 
+
+    {# 👇 Always include search results section (it will show only when query exists) #}
+    {% if products is defined and query is not empty %}
+    <section class="collections-section" id="search-results">
+        <div class="container">
+            {% if query %}
+                <h2 class="collections-title">Results for "{{ query }}"</h2>
+            {% else %}
+                <h2 class="collections-title">Search Results</h2>
+            {% endif %}
+
+            {% if products is empty %}
+                <p style="text-align:center; color:white;">No products found.</p>
+            {% else %}
+                <div class="collections-grid">
+                    {% for product in products %}
+                        <div class="collection-card">
+                            <a href="{{ path('app_products_show', { id: product.id }) }}" style="text-decoration:none; color:inherit;">
+                                <div class="collection-image">
+                                    <img src="/uploads/{{ product.image }}" alt="{{ product.name }}">
+                                </div>
+                                <div class="collection-info">
+                                    <h3>{{ product.name }}</h3>
+                                    <p class="collection-price">${{ product.price }}</p>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+
+    <!-- 🔍 Search Script -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.querySelector(".search-input");
+        const searchButton = document.querySelector(".search-button");
+
+        searchInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                const query = this.value.trim();
+                if (query.length > 0) {
+                    window.location.href = `/home/page?q=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+
+        searchButton.addEventListener("click", function() {
+            const query = searchInput.value.trim();
+            if (query.length > 0) {
+                window.location.href = `/home/page?q=${encodeURIComponent(query)}`;
+            }
+        });
+    });
+    </script>
+</body>
 {% endblock %}

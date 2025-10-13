@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: host.docker.internal  
+      PMA_PORT: 3306
+      PMA_USER: root                  
+      PMA_PASSWORD: ""                 
+    ports:
+      - "8000:80"                      
