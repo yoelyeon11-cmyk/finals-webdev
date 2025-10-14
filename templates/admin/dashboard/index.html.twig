@@ -1,0 +1,102 @@
+{# templates/admin/dashboard/index.html.twig #}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Dashboard - Cloudrobe Admin{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>Dashboard</h2>
+    <div class="header-actions">
+        <button class="btn btn-secondary">Export Report</button>
+        <a href="{{ path('admin_product_new') }}" class="btn btn-primary">+ New Product</a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Products</h3>
+        <div class="number">{{ stats.totalProducts }}</div>
+        <div class="change">+{{ stats.productsGrowth }}% from last month</div>
+    </div>
+    <div class="stat-card">
+        <h3>Categories</h3>
+        <div class="number">{{ stats.totalCategories }}</div>
+        <div class="change">+{{ stats.newCategories }} new this month</div>
+    </div>
+    <div class="stat-card">
+        <h3>Low Stock Items</h3>
+        <div class="number">{{ stats.lowStockCount }}</div>
+        <div class="change" style="color: #dc3545;">Needs attention</div>
+    </div>
+    <div class="stat-card">
+        <h3>Total Value</h3>
+        <div class="number">₱{{ stats.totalValue|number_format(0, '.', ',') }}</div>
+        <div class="change">+{{ stats.valueGrowth }}% from last month</div>
+    </div>
+</div>
+
+<div class="table-section">
+    <div class="table-header">
+        <h3>Recent Products</h3>
+        <input type="text" class="search-box" placeholder="Search products..." id="searchBox">
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Price</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in recentProducts %}
+            <tr>
+                <td>
+                    {% if product.image %}
+                        <img src="{{ asset('uploads/products/' ~ product.image) }}" alt="{{ product.name }}" class="product-img">
+                    {% else %}
+                        <div style="width:50px;height:50px;background:var(--accent);border-radius:8px;"></div>
+                    {% endif %}
+                </td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.category.name }}</td>
+                <td>{{ product.stock }}</td>
+                <td>₱{{ product.price|number_format(2) }}</td>
+                <td>
+                    {% if product.stock > 20 %}
+                        <span class="badge badge-success">In Stock</span>
+                    {% elseif product.stock > 0 %}
+                        <span class="badge badge-warning">Low Stock</span>
+                    {% else %}
+                        <span class="badge badge-danger">Out of Stock</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 30px;">No products found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    // Simple search functionality
+    document.getElementById('searchBox').addEventListener('keyup', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

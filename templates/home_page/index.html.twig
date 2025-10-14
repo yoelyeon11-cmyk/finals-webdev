@@ -533,7 +533,7 @@
 
             <!-- Navigation -->
             <div class="nav-links">
-                <a href="#" class="nav-link">Shop</a>
+                <a href="#" class="nav-link">Products</a>
                 <a href="#" class="nav-link">Custom</a>
                 <a href="#" class="nav-link">About</a>
                 <div class="cart-icon">
@@ -545,7 +545,7 @@
     </header>
 
 
-    {# 👇 Only show these sections when there’s NO search query #}
+    {# Only show these sections when there’s NO search query #}
     {% if query is empty %}
 
     <!-- Hero Section -->
@@ -632,10 +632,10 @@
     </section>
 
     {% endif %}
-    {# 👆 End of homepage-only content #}
+    {# End of homepage-only content #}
 
 
-    {# 👇 Always include search results section (it will show only when query exists) #}
+    {# Always include search results section (it will show only when query exists) #}
     {% if products is defined and query is not empty %}
     <section class="collections-section" id="search-results">
         <div class="container">
@@ -669,7 +669,7 @@
     {% endif %}
 
 
-    <!-- 🔍 Search Script -->
+    <!-- Search Script -->
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const searchInput = document.querySelector(".search-input");
