@@ -3,12 +3,86 @@
 
 {% block title %}Dashboard - Cloudrobe Admin{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <style>
+        /* Custom DataTables styling to match your theme */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: var(--text-secondary);
+            padding: 12px 0;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            background: var(--surface);
+            color: var(--text);
+            margin-left: 8px;
+        }
+        
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            background: var(--surface);
+            color: var(--text);
+            margin: 0 8px;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text) !important;
+            border-radius: 6px;
+            padding: 6px 12px;
+            margin: 0 2px;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white !important;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white !important;
+        }
+        
+        table.dataTable thead th {
+            border-bottom: 2px solid var(--border);
+        }
+        
+        table.dataTable tbody tr {
+            border-bottom: 1px solid var(--border);
+        }
+        
+        table.dataTable tbody tr:hover {
+            background: var(--hover);
+        }
+        
+        /* Remove the default search box since DataTables has its own */
+        .table-header .search-box {
+            display: none;
+        }
+        
+        .dataTables_wrapper {
+            padding: 0;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
 <div class="header">
-    <h2>Dashboard</h2>
+    <h2>Dashbgoard</h2>
     <div class="header-actions">
-        <button class="btn btn-secondary">Export Report</button>
-        <a href="{{ path('admin_product_new') }}" class="btn btn-primary">+ New Product</a>
     </div>
 </div>
 
@@ -16,17 +90,17 @@
     <div class="stat-card">
         <h3>Total Products</h3>
         <div class="number">{{ stats.totalProducts }}</div>
-        <div class="change">+{{ stats.productsGrowth }}% from last month</div>
+        <div class="change">+{{ stats.productsGrowth }}% </div>
     </div>
     <div class="stat-card">
         <h3>Categories</h3>
         <div class="number">{{ stats.totalCategories }}</div>
-        <div class="change">+{{ stats.newCategories }} new this month</div>
+        <div class="change">+{{ stats.newCategories }} </div>
     </div>
     <div class="stat-card">
         <h3>Low Stock Items</h3>
         <div class="number">{{ stats.lowStockCount }}</div>
-        <div class="change" style="color: #dc3545;">Needs attention</div>
+        <div class="change" style="color: #dc3545;"></div>
     </div>
     <div class="stat-card">
         <h3>Total Value</h3>
@@ -38,9 +112,8 @@
 <div class="table-section">
     <div class="table-header">
         <h3>Recent Products</h3>
-        <input type="text" class="search-box" placeholder="Search products..." id="searchBox">
     </div>
-    <table>
+    <table id="productsTable" class="display responsive nowrap" style="width:100%">
         <thead>
             <tr>
                 <th>Image</th>
@@ -62,10 +135,10 @@
                     {% endif %}
                 </td>
                 <td>{{ product.name }}</td>
-                <td>{{ product.category.name }}</td>
-                <td>{{ product.stock }}</td>
-                <td>₱{{ product.price|number_format(2) }}</td>
-                <td>
+                <td>{{ product.category ? product.category.name : 'No Category' }}</td>    
+                <td data-order="{{ product.stock }}">{{ product.stock }}</td>
+                <td data-order="{{ product.price }}">₱{{ product.price|number_format(2) }}</td>
+                <td data-order="{% if product.stock > 20 %}3{% elseif product.stock > 0 %}2{% else %}1{% endif %}">
                     {% if product.stock > 20 %}
                         <span class="badge badge-success">In Stock</span>
                     {% elseif product.stock > 0 %}
@@ -86,17 +159,36 @@
 {% endblock %}
 
 {% block javascripts %}
-{{ parent() }}
-<script>
-    // Simple search functionality
-    document.getElementById('searchBox').addEventListener('keyup', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? '' : 'none';
+    {{ parent() }}
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#productsTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                order: [[1, 'asc']], // Sort by Product Name by default
+                columnDefs: [
+                    { 
+                        orderable: false, 
+                        targets: 0 // Disable sorting on Image column
+                    }
+                ],
+                language: {
+                    search: "Search products:",
+                    lengthMenu: "Show _MENU_ products per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ products",
+                    infoEmpty: "No products available",
+                    infoFiltered: "(filtered from _MAX_ total products)",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                }
+            });
         });
-    });
-</script>
+    </script>
 {% endblock %}

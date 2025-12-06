@@ -1,0 +1,431 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Categories{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <style>
+        :root {
+            --primary: #e5a3a3;
+            --secondary: #df9152;
+            --accent: #ecc9c9;
+            --dark: #5c3a3a;
+            --light: #fdf6f6;
+            --success: #4caf50;
+            --danger: #f44336;
+        }
+
+        .categories-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: var(--light);
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .header h2 {
+            color: var(--dark);
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(92, 58, 58, 0.15);
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(92, 58, 58, 0.25);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(92, 58, 58, 0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--dark), #6b4545);
+        }
+
+        .table thead th {
+            color: var(--light);
+            padding: 1.25rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid var(--accent);
+            transition: background-color 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--accent);
+        }
+
+        .table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .table tbody td {
+            padding: 1rem 1.25rem;
+            color: var(--dark);
+        }
+
+        .table tbody td:first-child {
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .table tbody td:nth-child(2) {
+            font-weight: 500;
+            font-size: 1.05rem;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: var(--dark);
+            font-style: italic;
+            opacity: 0.7;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #f5bacaff, #f1bce6ff);
+            color: white;
+            box-shadow: 0 2px 4px rgba(74, 123, 196, 0.3);
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(74, 123, 196, 0.4);
+            background: linear-gradient(135deg, #4a7bc4, #5c9ce5);
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #e57373, #e489b0ff);
+            color: white;
+            box-shadow: 0 2px 4px rgba(211, 47, 47, 0.3);
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(203, 69, 69, 0.4);
+            background: linear-gradient(135deg, #de7d90ff, #e57373);
+        }
+
+        /* Products Column Styling */
+        .products-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-badge {
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            color: var(--dark);
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.813rem;
+            font-weight: 500;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(92, 58, 58, 0.1);
+        }
+
+        .product-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(92, 58, 58, 0.15);
+        }
+
+        .product-count {
+            color: var(--secondary);
+            font-size: 0.813rem;
+            font-weight: 600;
+            font-style: italic;
+        }
+
+        .no-products {
+            color: var(--dark);
+            opacity: 0.5;
+            font-style: italic;
+            font-size: 0.875rem;
+        }
+
+        /* DataTables Custom Styling */
+        .dataTables_wrapper {
+            padding: 1.5rem;
+            background: white;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: var(--dark);
+            padding: 12px 0;
+        }
+
+        .dataTables_wrapper .dataTables_filter {
+            float: right;
+        }
+
+        .dataTables_wrapper .dataTables_filter label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 8px 12px;
+            background: var(--light);
+            color: var(--dark);
+            margin-left: 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        .dataTables_wrapper .dataTables_filter input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .dataTables_wrapper .dataTables_length label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 6px 12px;
+            background: var(--light);
+            color: var(--dark);
+            margin: 0 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        .dataTables_wrapper .dataTables_length select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border: 2px solid var(--accent);
+            background: var(--light);
+            color: var(--dark) !important;
+            border-radius: 6px;
+            padding: 6px 12px;
+            margin: 0 2px;
+            transition: all 0.3s ease;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: var(--accent);
+            border-color: var(--primary);
+            color: var(--dark) !important;
+            transform: translateY(-1px);
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-color: var(--primary);
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .dataTables_wrapper .dataTables_info {
+            color: var(--dark);
+            font-weight: 500;
+            padding-top: 1rem;
+        }
+
+        table.dataTable thead .sorting,
+        table.dataTable thead .sorting_asc,
+        table.dataTable thead .sorting_desc {
+            cursor: pointer;
+            position: relative;
+        }
+
+        table.dataTable thead .sorting:after,
+        table.dataTable thead .sorting_asc:after,
+        table.dataTable thead .sorting_desc:after {
+            opacity: 0.6;
+            color: var(--light);
+        }
+
+        table.dataTable tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        table.dataTable.no-footer {
+            border-bottom: 2px solid var(--primary);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="categories-container">
+        <div class="header">
+            <h2>Categories</h2>
+            <a class="btn" href="{{ path('admin_category_new') }}">New Category</a>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="categoriesTable" class="table display responsive nowrap" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Products</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for category in categories %}
+                    <tr>
+                        <td>{{ category.id }}</td>
+                        <td>{{ category.name }}</td>
+                        <td>
+                            {% if category.products|length > 0 %}
+                                <div class="products-list">
+                                    {% for product in category.products %}
+                                        <span class="product-badge">{{ product.name }}</span>
+                                    {% endfor %}
+                                </div>
+                                <div class="product-count">({{ category.products|length }} product{{ category.products|length > 1 ? 's' : '' }})</div>
+                            {% else %}
+                                <span class="no-products">No products</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{{ path('admin_category_edit', {'id': category.id}) }}" class="btn-sm btn-edit">Edit</a>
+                                <form method="post" action="{{ path('admin_category_delete', {'id': category.id}) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ category.id) }}">
+                                    <button type="submit" class="btn-sm btn-delete">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="empty-message">No categories found.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#categoriesTable').DataTable({
+                responsive: true,
+                pageLength: 15,
+                order: [[1, 'asc']], // Sort by Name alphabetically
+                columnDefs: [
+                    {
+                        targets: 0,
+                        width: '100px'
+                    },
+                    {
+                        targets: 2, // Products column
+                        orderable: true,
+                        width: '300px'
+                    },
+                    {
+                        targets: 3, // Actions column
+                        orderable: false,
+                        searchable: false,
+                        width: '180px'
+                    }
+                ],
+                language: {
+                    search: "Search categories:",
+                    lengthMenu: "Show _MENU_ categories per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ categories",
+                    infoEmpty: "No categories available",
+                    infoFiltered: "(filtered from _MAX_ total categories)",
+                    emptyTable: "No categories found",
+                    zeroRecords: "No matching categories found",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock %}

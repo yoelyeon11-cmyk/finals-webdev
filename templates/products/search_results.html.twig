@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin/base.html.twig' %}
 
 {% block title %}Search Results{% endblock %}
 
@@ -108,7 +108,7 @@
                             <div class="product-info">
                                 <h3>{{ product.name }}</h3>
                                 <p class="price">${{ product.price }}</p>
-                                <a href="{{ path('app_products_show', { id: product.id }) }}" class="view-btn">
+                                <a href="{{ path('admin_product_show', { id: product.id }) }}" class="view-btn">
                                     View Details
                                 </a>
                             </div>
