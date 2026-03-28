@@ -1,0 +1,238 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Custom Cosplay Requests{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <style>
+        :root {
+            --primary: #ecc9c9;
+            --secondary: #df9152;
+            --accent: #e5a3a3;
+            --dark: #2c2c2c;
+            --light: #f8f9fa;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            margin: -30px -30px 2rem -30px;
+            width: calc(100% + 60px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 {
+            color: var(--dark);
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--secondary), #c97642);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(223, 145, 82, 0.4);
+        }
+
+        .requests-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        table.dataTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.dataTable thead {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+        }
+
+        table.dataTable thead th {
+            padding: 1.2rem 1.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: none;
+        }
+
+        table.dataTable tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        table.dataTable tbody tr:hover {
+            background: var(--light);
+        }
+
+        table.dataTable tbody td {
+            padding: 1.2rem 1.5rem;
+            color: #666;
+        }
+
+        .badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin: 0.2rem;
+        }
+
+        .badge-success { background: #10b981; color: white; }
+        .badge-danger { background: #ef4444; color: white; }
+        .badge-warning { background: #f59e0b; color: white; }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: var(--primary);
+            color: var(--dark);
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-action:hover {
+            background: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .btn-action svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            padding: 1rem 1.5rem;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>🎭 Custom Cosplay Requests</h2>
+    <a href="{{ path('admin_custom_request_new') }}" class="btn">
+        <svg fill="currentColor" viewBox="0 0 20 20" style="width: 16px; height: 16px; margin-right: 4px;">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+        </svg>
+        New Request
+    </a>
+</div>
+
+<div class="requests-table">
+    <table id="requestsTable" class="display responsive nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Character/Subject</th>
+                <th>Estimated Cost</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests %}
+            <tr>
+                <td>#{{ request.id }}</td>
+                <td>
+                    <strong>{{ request.customerName }}</strong><br>
+                    <small>{{ request.customerEmail }}</small>
+                </td>
+                <td>{{ request.cosplayCharacter }}</td>
+                <td>
+                    {% if request.estimatedCost %}
+                        <strong>${{ request.estimatedCost }}</strong>
+                    {% else %}
+                        <em>Not quoted</em>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge badge-{{ request.status == 'approved' ? 'success' : (request.status == 'rejected' ? 'danger' : 'warning') }}">
+                        {{ request.statusLabel }}
+                    </span>
+                </td>
+                <td>{{ request.createdAt|date('M d, Y') }}</td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{{ path('admin_custom_request_show', {id: request.id}) }}" class="btn-action" title="View Details">
+                            <svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path></svg>
+                        </a>
+                        <a href="{{ path('admin_custom_request_edit', {id: request.id}) }}" class="btn-action" title="Edit">
+                            <svg fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        $('#requestsTable').DataTable({
+            responsive: true,
+            order: [[5, 'desc']],
+            pageLength: 25,
+            language: {
+                search: "Search requests:",
+                lengthMenu: "Show _MENU_ requests per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ requests",
+                emptyTable: "No custom requests found",
+                zeroRecords: "No matching requests found"
+            }
+        });
+    });
+    </script>
+{% endblock %}

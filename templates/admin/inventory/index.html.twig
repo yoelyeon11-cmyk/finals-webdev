@@ -301,10 +301,6 @@
                     <td data-order="{{ entry.quantity }}">{{ entry.quantity }}</td>
                     <td data-order="{{ entry.createdAt|date('U') }}">{{ entry.createdAt|date('Y-m-d H:i') }}</td>
                 </tr>
-            {% else %}
-                <tr>
-                    <td colspan="4" class="empty-message">No inventory entries found.</td>
-                </tr>
             {% endfor %}
             </tbody>
         </table>

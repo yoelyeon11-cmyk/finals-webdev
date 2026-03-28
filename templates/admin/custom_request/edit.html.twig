@@ -1,0 +1,14 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Edit Request #{{ request.id }}{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>Edit Custom Request #{{ request.id }}</h2>
+    <a href="{{ path('admin_custom_request_show', {id: request.id}) }}" class="btn btn-secondary">← Back to Details</a>
+</div>
+
+<div class="card">
+    {{ include('admin/custom_request/_form.html.twig', {'button_label': 'Update Request'}) }}
+</div>
+{% endblock %}

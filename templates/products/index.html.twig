@@ -94,8 +94,6 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
         }
 
-        .btn-new::before { content: "✨"; font-size: 1.2rem; }
-
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -303,7 +301,9 @@
                 <h1>Cloudrobe Products</h1>
                 <p>Your complete cosplay collection</p>
             </div>
-            <a href="{{ path('admin_product_new') }}" class="btn-new">Add New Product</a>
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('admin_product_new') }}" class="btn-new">Add New Product</a>
+            {% endif %}
         </div>
     </div>
 
@@ -325,10 +325,12 @@
                             <a href="{{ path('admin_product_show', {'id': product.id}) }}" class="btn-action btn-show">View</a>
                             <a href="{{ path('admin_product_edit', {'id': product.id}) }}" class="btn-action btn-edit">Edit</a>
 
-                            <form method="post" action="{{ path('admin_product_delete', {'id': product.id}) }}" onsubmit="return confirm('Are you sure you want to delete this product?');" style="margin: 0;">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ product.id) }}">
-                                <button type="submit" class="btn-action btn-delete" style="width: 100%;">Delete</button>
-                            </form>
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <form method="post" action="{{ path('admin_product_delete', {'id': product.id}) }}" onsubmit="return confirm('Are you sure you want to delete this product?');" style="margin: 0;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ product.id) }}">
+                                    <button type="submit" class="btn-action btn-delete" style="width: 100%;">Delete</button>
+                                </form>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

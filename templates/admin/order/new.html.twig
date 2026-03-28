@@ -1,0 +1,96 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ customRequest is defined ? 'Create Order from Request' : 'New Order' }}{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>📦 {{ customRequest is defined ? 'Create Order from Custom Request #' ~ customRequest.id : 'New Order' }}</h2>
+    <a href="{{ path('admin_order_index') }}" class="btn btn-secondary">← Back to Orders</a>
+</div>
+
+{% if customRequest is defined %}
+<div class="alert alert-info">
+    <strong>Creating order from Custom Request #{{ customRequest.id }}</strong><br>
+    Customer: {{ customRequest.customerName }} - Character: {{ customRequest.cosplayCharacter }}
+</div>
+{% endif %}
+
+<div class="card">
+    {{ form_start(form) }}
+    
+    <div class="form-section">
+        <h3>Customer Information</h3>
+        <div class="form-row">
+            <div class="form-group">
+                {{ form_label(form.customerName) }}
+                {{ form_widget(form.customerName) }}
+                {{ form_errors(form.customerName) }}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                {{ form_label(form.customerEmail) }}
+                {{ form_widget(form.customerEmail) }}
+                {{ form_errors(form.customerEmail) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.customerPhone) }}
+                {{ form_widget(form.customerPhone) }}
+                {{ form_errors(form.customerPhone) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3>Order Details</h3>
+        <div class="form-row">
+            <div class="form-group">
+                {{ form_label(form.itemsDescription) }}
+                {{ form_widget(form.itemsDescription) }}
+                {{ form_errors(form.itemsDescription) }}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                {{ form_label(form.totalAmount) }}
+                {{ form_widget(form.totalAmount) }}
+                {{ form_errors(form.totalAmount) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.paymentMethod) }}
+                {{ form_widget(form.paymentMethod) }}
+                {{ form_errors(form.paymentMethod) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3>Shipping Information</h3>
+        <div class="form-row">
+            <div class="form-group">
+                {{ form_label(form.shippingAddress) }}
+                {{ form_widget(form.shippingAddress) }}
+                {{ form_errors(form.shippingAddress) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create Order</button>
+        <a href="{{ path('admin_order_index') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+
+<style>
+.alert-info {
+    background: #dbeafe;
+    border: 1px solid #3b82f6;
+    color: #1e40af;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+</style>
+{% endblock %}

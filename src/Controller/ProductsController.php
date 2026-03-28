@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Products;
 use App\Form\ProductsType;
 use App\Repository\ProductsRepository;
+use App\Service\ActivityLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
@@ -12,8 +13,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/products')]
+#[IsGranted('ROLE_STAFF')]
 final class ProductsController extends AbstractController
 {
     #[Route(name: 'admin_product_index', methods: ['GET'])]
@@ -25,7 +28,8 @@ final class ProductsController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_product_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    #[IsGranted('ROLE_ADMIN')]
+    public function new(Request $request, EntityManagerInterface $entityManager, ActivityLogger $logger): Response
     {
         $product = new Products();
         $form = $this->createForm(ProductsType::class, $product);
@@ -36,6 +40,7 @@ final class ProductsController extends AbstractController
             $entityManager->persist($product);
             $entityManager->flush();
 
+            $logger->log('Product Created', 'Created product: ' . $product->getName() . ' (ID: ' . $product->getId() . ')');
             $this->addFlash('success', 'Product created successfully!');
 
             return $this->redirectToRoute('admin_product_index');
@@ -48,7 +53,7 @@ final class ProductsController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_product_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Products $product, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Products $product, EntityManagerInterface $entityManager, ActivityLogger $logger): Response
     {
         $form = $this->createForm(ProductsType::class, $product);
         $form->handleRequest($request);
@@ -57,6 +62,7 @@ final class ProductsController extends AbstractController
             $this->handleImageUpload($form, $product);
             $entityManager->flush();
 
+            $logger->log('Product Updated', 'Updated product: ' . $product->getName() . ' (ID: ' . $product->getId() . ')');
             $this->addFlash('success', 'Product updated successfully!');
 
             return $this->redirectToRoute('admin_product_index');
@@ -69,12 +75,16 @@ final class ProductsController extends AbstractController
     }
 
     #[Route('/delete/{id}', name: 'admin_product_delete', methods: ['POST'])]
-    public function delete(Request $request, Products $product, EntityManagerInterface $entityManager): Response
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(Request $request, Products $product, EntityManagerInterface $entityManager, ActivityLogger $logger): Response
     {
         if ($this->isCsrfTokenValid('delete' . $product->getId(), $request->request->get('_token'))) {
+            $productName = $product->getName();
+            $productId = $product->getId();
             $entityManager->remove($product);
             $entityManager->flush();
 
+            $logger->log('Product Deleted', 'Deleted product: ' . $productName . ' (ID: ' . $productId . ')');
             $this->addFlash('success', 'Product deleted successfully!');
         }
 

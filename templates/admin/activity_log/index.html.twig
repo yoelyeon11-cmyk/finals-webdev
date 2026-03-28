@@ -1,0 +1,121 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Activity Logs - Cloudrobe{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>📊 Activity Logs</h2>
+</div>
+
+<div class="table-section" style="margin-bottom: 20px;">
+    <div class="table-header">
+        <h3>Filter Logs</h3>
+    </div>
+    
+    <form method="get" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" value="{{ filters.username }}" placeholder="Search username">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="action">Action</label>
+                <input type="text" class="form-control" id="action" name="action" value="{{ filters.action }}" placeholder="Search action">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="role">Role</label>
+                <select class="form-control" id="role" name="role">
+                    <option value="">All Roles</option>
+                    <option value="ADMIN" {{ filters.role == 'ADMIN' ? 'selected' : '' }}>Admin</option>
+                    <option value="STAFF" {{ filters.role == 'STAFF' ? 'selected' : '' }}>Staff</option>
+                    <option value="USER" {{ filters.role == 'USER' ? 'selected' : '' }}>User</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="dateFrom">Date From</label>
+                <input type="date" class="form-control" id="dateFrom" name="dateFrom" value="{{ filters.dateFrom ? filters.dateFrom|date('Y-m-d') : '' }}">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="dateTo">Date To</label>
+                <input type="date" class="form-control" id="dateTo" name="dateTo" value="{{ filters.dateTo ? filters.dateTo|date('Y-m-d') : '' }}">
+            </div>
+            
+            <div style="display: flex; align-items: flex-end; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Filter</button>
+                <a href="{{ path('admin_activity_logs') }}" class="btn btn-secondary" style="flex: 1;">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="table-section">
+    <div class="table-header">
+        <h3>Activity History</h3>
+        <span style="color: #999;">Showing {{ logs|length }} records</span>
+    </div>
+    
+    <table id="activityLogsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Timestamp</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Action</th>
+                <th>Target Data</th>
+                <th>IP Address</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.createdAt|date('Y-m-d H:i:s') }}</td>
+                <td><strong>{{ log.username }}</strong></td>
+                <td>
+                    {% if log.role == 'ADMIN' %}
+                        <span class="badge badge-danger">{{ log.role }}</span>
+                    {% elseif log.role == 'STAFF' %}
+                        <span class="badge badge-warning">{{ log.role }}</span>
+                    {% else %}
+                        <span class="badge badge-success">{{ log.role }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span style="font-weight: 500; color: #2c2c2c;">{{ log.action }}</span>
+                </td>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ log.targetData }}">
+                    {{ log.targetData ?: '-' }}
+                </td>
+                <td><small>{{ log.ipAddress ?: '-' }}</small></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #999;">No activity logs found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    {% if logs|length > 0 %}
+    $('#activityLogsTable').DataTable({
+        "pageLength": 50,
+        "order": [[1, "desc"]],
+        "language": {
+            "emptyTable": "No activity logs found"
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

@@ -8,8 +8,10 @@ use App\Repository\CategoryRepository;  // Add this import
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin')]
+#[IsGranted('ROLE_STAFF')]
 class DashboardController extends AbstractController
 {
     #[Route('/', name: 'admin_dashboard')]

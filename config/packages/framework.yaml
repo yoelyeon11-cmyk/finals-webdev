@@ -5,6 +5,13 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    # Tell Symfony to trust the reverse proxy (ngrok / Symfony CLI) so that
+    # the original HTTPS scheme & host are taken from the X-Forwarded-* headers.
+    # This is important when exposing the app via tunnels like ngrok; otherwise
+    # CSRF origin checks and asset URLs may be generated as plain HTTP and fail.
+    trusted_proxies: '127.0.0.1,REMOTE_ADDR'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-host']
+
     csrf_protection:
         enabled: true
 

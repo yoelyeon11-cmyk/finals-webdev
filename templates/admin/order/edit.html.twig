@@ -1,0 +1,79 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Edit Order {{ order.transactionId }}{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>Edit Order {{ order.transactionId }}</h2>
+    <a href="{{ path('admin_order_show', {id: order.id}) }}" class="btn btn-secondary">← Back to Order</a>
+</div>
+
+<div class="card">
+    <form method="post">
+        <div class="form-group">
+            <label for="customer_name">Customer Name *</label>
+            <input type="text" class="form-control" id="customer_name" name="order[customerName]" value="{{ order.customerName }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="customer_email">Customer Email *</label>
+            <input type="email" class="form-control" id="customer_email" name="order[customerEmail]" value="{{ order.customerEmail }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="customer_phone">Customer Phone</label>
+            <input type="text" class="form-control" id="customer_phone" name="order[customerPhone]" value="{{ order.customerPhone }}">
+        </div>
+
+        <div class="form-group">
+            <label for="items_description">Order Items/Description *</label>
+            <textarea class="form-control" id="items_description" name="order[itemsDescription]" rows="4" required>{{ order.itemsDescription }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="total_amount">Total Amount ($) *</label>
+            <input type="number" step="0.01" class="form-control" id="total_amount" name="order[totalAmount]" value="{{ order.totalAmount }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="payment_method">Payment Method</label>
+            <select class="form-control" id="payment_method" name="order[paymentMethod]">
+                <option value="">Select Payment Method</option>
+                <option value="cash" {{ order.paymentMethod == 'cash' ? 'selected' : '' }}>Cash</option>
+                <option value="gcash" {{ order.paymentMethod == 'gcash' ? 'selected' : '' }}>GCash</option>
+                <option value="bank_transfer" {{ order.paymentMethod == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                <option value="credit_card" {{ order.paymentMethod == 'credit_card' ? 'selected' : '' }}>Credit Card</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="shipping_address">Shipping Address</label>
+            <textarea class="form-control" id="shipping_address" name="order[shippingAddress]" rows="3">{{ order.shippingAddress }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Order Status</label>
+            <select class="form-control" id="status" name="order[status]">
+                <option value="new_order" {{ order.status == 'new_order' ? 'selected' : '' }}>New Order</option>
+                <option value="preparing" {{ order.status == 'preparing' ? 'selected' : '' }}>Preparing Order</option>
+                <option value="ready_to_ship" {{ order.status == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
+                <option value="shipping" {{ order.status == 'shipping' ? 'selected' : '' }}>Shipping</option>
+                <option value="delivered" {{ order.status == 'delivered' ? 'selected' : '' }}>Delivered/Completed</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="shipping_carrier">Shipping Carrier</label>
+            <input type="text" class="form-control" id="shipping_carrier" name="order[shippingCarrier]" value="{{ order.shippingCarrier }}" placeholder="e.g., FedEx, UPS, USPS">
+        </div>
+
+        <div class="form-group">
+            <label for="tracking_number">Tracking Number</label>
+            <input type="text" class="form-control" id="tracking_number" name="order[trackingNumber]" value="{{ order.trackingNumber }}" placeholder="Enter tracking number">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Update Order</button>
+        <a href="{{ path('admin_order_show', {id: order.id}) }}" class="btn btn-secondary" style="margin-top: 10px;">Cancel</a>
+    </form>
+</div>
+{% endblock %}

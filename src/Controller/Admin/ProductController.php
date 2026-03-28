@@ -4,15 +4,19 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Products;
-use App\Form\ProductType;
+use App\Form\ProductsType;
 use App\Repository\ProductsRepository;
+use App\Service\ActivityLogger;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/admin/products')]
+#[IsGranted('ROLE_STAFF')]
 class ProductController extends AbstractController
 {
     #[Route('/', name: 'admin_product_index')]
@@ -26,17 +30,23 @@ class ProductController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_product_new')]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    #[IsGranted('ROLE_ADMIN')]
+    public function new(Request $request, EntityManagerInterface $em, ActivityLogger $logger, LoggerInterface $consoleLogger): Response
     {
         $product = new Products();
-        $form = $this->createForm(ProductType::class, $product);
+        $form = $this->createForm(ProductsType::class, $product);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $em->persist($product);
             $em->flush();
 
+            $consoleLogger->info('🟢 PRODUCT CREATED - Name: ' . $product->getName() . ', ID: ' . $product->getId() . ', User: ' . $this->getUser()->getUserIdentifier());
+            $logger->log('Product Created', 'Created product: ' . $product->getName() . ' (ID: ' . $product->getId() . ')');
+            $consoleLogger->info('🟢 ACTIVITY LOG CALLED for Product Created');
             $this->addFlash('success', 'Product created successfully!');
+            $this->addFlash('console_debug', '🟢 PRODUCT CREATED - Name: ' . $product->getName() . ', ID: ' . $product->getId() . ', User: ' . $this->getUser()->getUserIdentifier());
+            $this->addFlash('console_debug', '🟢 ActivityLogger.log() called for Product Created');
             return $this->redirectToRoute('admin_product_index');
         }
 
@@ -46,7 +56,7 @@ class ProductController extends AbstractController
         ]);
     }
 #[Route('/{id}/edit', name: 'admin_product_edit', methods: ['GET', 'POST'])]
-public function edit(Request $request, Products $product, EntityManagerInterface $entityManager): Response
+public function edit(Request $request, Products $product, EntityManagerInterface $entityManager, ActivityLogger $logger, LoggerInterface $consoleLogger): Response
 {
     // Check CSRF token manually for POST requests
     if ($request->isMethod('POST')) {
@@ -75,7 +85,12 @@ public function edit(Request $request, Products $product, EntityManagerInterface
         }
         $entityManager->flush();
         
+        $consoleLogger->info('🟡 PRODUCT UPDATED - Name: ' . $product->getName() . ', ID: ' . $product->getId() . ', User: ' . $this->getUser()->getUserIdentifier());
+        $logger->log('Product Updated', 'Updated product: ' . $product->getName() . ' (ID: ' . $product->getId() . ')');
+        $consoleLogger->info('🟡 ACTIVITY LOG CALLED for Product Updated');
         $this->addFlash('success', 'Product updated successfully!');
+        $this->addFlash('console_debug', '🟡 PRODUCT UPDATED - Name: ' . $product->getName() . ', ID: ' . $product->getId() . ', User: ' . $this->getUser()->getUserIdentifier());
+        $this->addFlash('console_debug', '🟡 ActivityLogger.log() called for Product Updated');
 
         return $this->redirectToRoute('admin_product_index', [], Response::HTTP_SEE_OTHER);
     }
@@ -87,12 +102,20 @@ public function edit(Request $request, Products $product, EntityManagerInterface
 }
 
     #[Route('/{id}', name: 'admin_product_delete', methods: ['POST'])]
-    public function delete(Request $request, Products $product, EntityManagerInterface $em): Response  // ← Changed Product to Products
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(Request $request, Products $product, EntityManagerInterface $em, ActivityLogger $logger, LoggerInterface $consoleLogger): Response
     {
         if ($this->isCsrfTokenValid('delete'.$product->getId(), $request->request->get('_token'))) {
+            $productName = $product->getName();
+            $productId = $product->getId();
             $em->remove($product);
             $em->flush();
+            $consoleLogger->info('🔴 PRODUCT DELETED - Name: ' . $productName . ', ID: ' . $productId . ', User: ' . $this->getUser()->getUserIdentifier());
+            $logger->log('Product Deleted', 'Deleted product: ' . $productName);
+            $consoleLogger->info('🔴 ACTIVITY LOG CALLED for Product Deleted');
             $this->addFlash('success', 'Product deleted successfully!');
+            $this->addFlash('console_debug', '🔴 PRODUCT DELETED - Name: ' . $productName . ', ID: ' . $productId . ', User: ' . $this->getUser()->getUserIdentifier());
+            $this->addFlash('console_debug', '🔴 ActivityLogger.log() called for Product Deleted');
         }
 
         return $this->redirectToRoute('admin_product_index');

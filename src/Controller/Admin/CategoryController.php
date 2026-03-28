@@ -5,13 +5,16 @@ namespace App\Controller\Admin;
 use App\Entity\Category;
 use App\Form\CategoryType;
 use App\Repository\CategoryRepository;
+use App\Service\ActivityLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/categories')]
+#[IsGranted('ROLE_ADMIN')]
 class CategoryController extends AbstractController
 {
     #[Route('/', name: 'admin_category_index', methods: ['GET'])]
@@ -26,7 +29,7 @@ class CategoryController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_category_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, ActivityLogger $logger): Response
     {
         $category = new Category();
         $form = $this->createForm(CategoryType::class, $category);
@@ -36,6 +39,7 @@ class CategoryController extends AbstractController
             $entityManager->persist($category);
             $entityManager->flush();
 
+            $logger->log('Category Created', 'Created category: ' . $category->getName());
             $this->addFlash('success', 'Category created successfully!');
 
             return $this->redirectToRoute('admin_category_index', [], Response::HTTP_SEE_OTHER);
@@ -48,13 +52,14 @@ class CategoryController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_category_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Category $category, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Category $category, EntityManagerInterface $entityManager, ActivityLogger $logger): Response
     {
             $form = $this->createForm(CategoryType::class, $category);
             $form->handleRequest($request);
 
             if ($form->isSubmitted() && $form->isValid()) {
                 $entityManager->flush(); // products will now be synced properly
+                $logger->log('Category Updated', 'Updated category: ' . $category->getName());
                 $this->addFlash('success', 'Category updated successfully!');
                 return $this->redirectToRoute('admin_category_index');
             }
@@ -67,7 +72,7 @@ class CategoryController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'admin_category_delete', methods: ['POST'])]
-    public function delete(Request $request, Category $category, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, Category $category, EntityManagerInterface $entityManager, ActivityLogger $logger): Response
     {
         if ($this->isCsrfTokenValid('delete'.$category->getId(), $request->request->get('_token'))) {
             
@@ -75,8 +80,10 @@ class CategoryController extends AbstractController
             if ($category->getProducts()->count() > 0) {
                 $this->addFlash('warning', 'Cannot delete category that has products!');
             } else {
+                $categoryName = $category->getName();
                 $entityManager->remove($category);
                 $entityManager->flush();
+                $logger->log('Category Deleted', 'Deleted category: ' . $categoryName);
                 $this->addFlash('success', 'Category deleted successfully!');
             }
         }

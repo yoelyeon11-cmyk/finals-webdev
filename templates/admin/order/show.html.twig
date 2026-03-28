@@ -1,0 +1,197 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Order {{ order.transactionId }}{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>Order {{ order.transactionId }}</h2>
+    <div>
+        {% if order.status == 'new_order' %}
+            <a href="{{ path('admin_order_edit', {id: order.id}) }}" class="btn btn-secondary">Edit Order</a>
+        {% endif %}
+        <a href="{{ path('admin_order_index') }}" class="btn btn-secondary">← Back to Orders</a>
+    </div>
+</div>
+
+<div class="details-grid">
+    <div class="card">
+        <h3>Order Information</h3>
+        <table class="details-table">
+            <tr>
+                <th>Transaction ID:</th>
+                <td><strong>{{ order.transactionId }}</strong></td>
+            </tr>
+            <tr>
+                <th>Order Date:</th>
+                <td>{{ order.orderDate|date('F d, Y h:i A') }}</td>
+            </tr>
+            <tr>
+                <th>Total Amount:</th>
+                <td><strong style="color: var(--secondary); font-size: 20px;">${{ order.totalAmount }}</strong></td>
+            </tr>
+            <tr>
+                <th>Payment Method:</th>
+                <td><span class="badge badge-info">{{ order.paymentMethod|upper }}</span></td>
+            </tr>
+            <tr>
+                <th>Created By:</th>
+                <td>{{ order.createdBy ? order.createdBy.fullName : 'System' }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>Customer Information</h3>
+        <table class="details-table">
+            <tr>
+                <th>Name:</th>
+                <td>{{ order.customerName }}</td>
+            </tr>
+            <tr>
+                <th>Email:</th>
+                <td>{{ order.customerEmail }}</td>
+            </tr>
+            <tr>
+                <th>Phone:</th>
+                <td>{{ order.customerPhone|default('N/A') }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Order Items/Description</h3>
+    <p style="white-space: pre-line; background: var(--light); padding: 15px; border-radius: 8px;">{{ order.itemsDescription }}</p>
+</div>
+
+{% if order.shippingAddress %}
+<div class="card">
+    <h3>Shipping Address</h3>
+    <p style="white-space: pre-line; background: var(--light); padding: 15px; border-radius: 8px;">{{ order.shippingAddress }}</p>
+</div>
+{% endif %}
+
+<div class="card">
+    <h3>Order Status & Tracking</h3>
+    
+    <div class="status-timeline">
+        <div class="status-item {{ order.status == 'new_order' or order.status == 'preparing' or order.status == 'ready_to_ship' or order.status == 'shipping' or order.status == 'delivered' ? 'completed' : '' }}">
+            <div class="status-dot"></div>
+            <div class="status-label">New Order</div>
+        </div>
+        <div class="status-item {{ order.status == 'preparing' or order.status == 'ready_to_ship' or order.status == 'shipping' or order.status == 'delivered' ? 'completed' : '' }}">
+            <div class="status-dot"></div>
+            <div class="status-label">Preparing</div>
+        </div>
+        <div class="status-item {{ order.status == 'ready_to_ship' or order.status == 'shipping' or order.status == 'delivered' ? 'completed' : '' }}">
+            <div class="status-dot"></div>
+            <div class="status-label">Ready to Ship</div>
+        </div>
+        <div class="status-item {{ order.status == 'shipping' or order.status == 'delivered' ? 'completed' : '' }}">
+            <div class="status-dot"></div>
+            <div class="status-label">Shipping</div>
+        </div>
+        <div class="status-item {{ order.status == 'delivered' ? 'completed' : '' }}">
+            <div class="status-dot"></div>
+            <div class="status-label">Delivered</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px; padding: 20px; background: var(--light); border-radius: 8px;">
+        <h4 style="margin-bottom: 15px;">Update Order Status</h4>
+        <form method="post" action="{{ path('admin_order_update_status', {id: order.id}) }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="order_status">Order Status</label>
+                    <select name="order[status]" id="order_status" class="form-control">
+                        <option value="new_order" {{ order.status == 'new_order' ? 'selected' : '' }}>New Order</option>
+                        <option value="preparing" {{ order.status == 'preparing' ? 'selected' : '' }}>Preparing Order</option>
+                        <option value="ready_to_ship" {{ order.status == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
+                        <option value="shipping" {{ order.status == 'shipping' ? 'selected' : '' }}>Shipping</option>
+                        <option value="delivered" {{ order.status == 'delivered' ? 'selected' : '' }}>Delivered/Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="order_shippingCarrier">Shipping Carrier</label>
+                    <input type="text" name="order[shippingCarrier]" id="order_shippingCarrier" class="form-control" placeholder="e.g., FedEx, UPS, USPS" value="{{ order.shippingCarrier }}">
+                </div>
+                <div class="form-group">
+                    <label for="order_trackingNumber">Tracking Number</label>
+                    <input type="text" name="order[trackingNumber]" id="order_trackingNumber" class="form-control" placeholder="Enter tracking number" value="{{ order.trackingNumber }}">
+                </div>
+            </div>
+            <input type="hidden" name="_token" value="{{ csrf_token('order_status_' ~ order.id) }}">
+            <button type="submit" class="btn btn-primary">Update Status</button>
+        </form>
+    </div>
+
+    {% if order.trackingNumber %}
+    <div style="margin-top: 20px; padding: 15px; background: #ecc9c9; border-radius: 8px;">
+        <strong>📦 Tracking Information:</strong><br>
+        Carrier: {{ order.shippingCarrier }}<br>
+        Tracking Number: <strong>{{ order.trackingNumber }}</strong>
+    </div>
+    {% endif %}
+</div>
+
+{% if order.customRequest %}
+<div class="card">
+    <h3>🎭 Related Custom Request</h3>
+    <p>This order was created from <a href="{{ path('admin_custom_request_show', {id: order.customRequest.id}) }}">Custom Request #{{ order.customRequest.id }}</a></p>
+</div>
+{% endif %}
+
+<style>
+.status-timeline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 30px 0;
+}
+
+.status-timeline::before {
+    content: '';
+    position: absolute;
+    top: 30px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 0;
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.status-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    border: 3px solid white;
+    margin-bottom: 10px;
+}
+
+.status-item.completed .status-dot {
+    background: var(--secondary);
+}
+
+.status-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+}
+
+.status-item.completed .status-label {
+    color: var(--secondary);
+}
+
+.badge-info { background: #e5a3a3; color: white; }
+</style>
+{% endblock %}

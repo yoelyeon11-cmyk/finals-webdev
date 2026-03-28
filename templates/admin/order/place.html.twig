@@ -1,0 +1,209 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Place Order - Cloudrobe{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>Place Order</h2>
+    <div class="header-actions">
+        <a href="{{ path('admin_order_status') }}" class="btn btn-secondary">
+            View Order Status
+        </a>
+    </div>
+</div>
+
+{% for label, messages in app.flashes %}
+    <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+{% endfor %}
+
+<div class="table-section">
+    <div class="table-header">
+        <h3>Create New Order</h3>
+    </div>
+    
+    <div style="max-width: 800px;">
+        <form method="post" action="{{ path('admin_order_place') }}">
+            <div class="form-group">
+                <label for="customer_name">Customer Name *</label>
+                <input type="text" class="form-control" id="customer_name" name="order[customerName]" required>
+            </div>
+
+            <div class="form-group">
+                <label for="customer_email">Customer Email *</label>
+                <input type="email" class="form-control" id="customer_email" name="order[customerEmail]" required>
+            </div>
+
+            <div class="form-group">
+                <label for="customer_phone">Customer Phone</label>
+                <input type="text" class="form-control" id="customer_phone" name="order[customerPhone]">
+            </div>
+
+            <div class="form-group">
+                <label for="products">Select Products *</label>
+                <select multiple class="form-control" id="products" name="products[]" required style="height: 150px;">
+                    {% for product in products %}
+                        <option value="{{ product.id }}" data-price="{{ product.price }}">
+                            {{ product.name }} - ₱{{ product.price|number_format(2) }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small style="color: #999; display: block; margin-top: 5px;">Hold Ctrl (or Cmd on Mac) to select multiple products</small>
+            </div>
+
+            <div class="form-group">
+                <label for="quantities">Quantities (comma-separated) *</label>
+                <input type="text" class="form-control" id="quantities" name="quantities" placeholder="e.g., 1,2,1" required>
+                <small style="color: #999; display: block; margin-top: 5px;">Enter quantity for each selected product in order, separated by commas</small>
+            </div>
+
+            <div class="form-group">
+                <label for="total_amount">Total Amount (₱) *</label>
+                <input type="number" step="0.01" class="form-control" id="total_amount" name="order[totalAmount]" required readonly>
+                <small style="color: #999; display: block; margin-top: 5px;">Total will be calculated automatically</small>
+            </div>
+
+            <div class="form-group">
+                <label for="payment_method">Payment Method</label>
+                <select class="form-control" id="payment_method" name="order[paymentMethod]">
+                    <option value="">Select Payment Method</option>
+                    <option value="cash">Cash</option>
+                    <option value="gcash">GCash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="credit_card">Credit Card</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="shipping_address">Shipping Address</label>
+                <textarea class="form-control" id="shipping_address" name="order[shippingAddress]" rows="3"></textarea>
+            </div>
+
+            <input type="hidden" id="items_description" name="order[itemsDescription]">
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+                <svg fill="currentColor" viewBox="0 0 20 20" style="width: 16px; height: 16px; display: inline-block; margin-right: 4px;">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
+                </svg>
+                Create Order
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productsSelect = document.getElementById('products');
+    const quantitiesInput = document.getElementById('quantities');
+    const totalInput = document.getElementById('total_amount');
+    const itemsDescInput = document.getElementById('items_description');
+    const form = productsSelect.closest('form');
+
+    function calculateTotal() {
+        const selectedOptions = Array.from(productsSelect.selectedOptions);
+        const quantities = quantitiesInput.value.split(',').map(q => parseInt(q.trim()) || 0);
+        
+        let total = 0;
+        let description = [];
+        
+        selectedOptions.forEach((option, index) => {
+            const price = parseFloat(option.dataset.price);
+            const qty = quantities[index] || 1;
+            total += price * qty;
+            description.push(`${option.textContent.split(' - ')[0]} (x${qty})`);
+        });
+        
+        totalInput.value = total.toFixed(2);
+        itemsDescInput.value = description.join(', ');
+    }
+
+    productsSelect.addEventListener('change', calculateTotal);
+    quantitiesInput.addEventListener('input', calculateTotal);
+
+    form.addEventListener('submit', function(e) {
+        const selectedOptions = Array.from(productsSelect.selectedOptions);
+        const quantities = quantitiesInput.value.split(',').map(q => parseInt(q.trim()) || 0);
+        
+        if (selectedOptions.length !== quantities.length) {
+            e.preventDefault();
+            alert('Please enter a quantity for each selected product');
+            return false;
+        }
+        
+        if (quantities.some(q => q <= 0 || isNaN(q))) {
+            e.preventDefault();
+            alert('All quantities must be positive numbers');
+            return false;
+        }
+    });
+});
+</script>
+
+<div class="table-section" style="margin-top: 30px;">
+    <div class="table-header">
+        <h3>Approved Custom Requests Ready for Order</h3>
+    </div>
+    
+    <table id="approvedRequestsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Character/Design</th>
+                <th>Final Price</th>
+                <th>Approved Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in approvedRequests %}
+            <tr>
+                <td>{{ request.id }}</td>
+                <td>
+                    <strong>{{ request.customerName }}</strong><br>
+                    <small style="color: #999;">{{ request.customerEmail }}</small>
+                </td>
+                <td>{{ request.cosplayCharacter ?: 'Custom Design' }}</td>
+                <td><strong style="color: #df9152;">₱{{ request.estimatedCost|number_format(2) }}</strong></td>
+                <td>{{ request.updatedAt|date('M d, Y') }}</td>
+                <td>
+                    <a href="{{ path('admin_custom_request_convert', {id: request.id}) }}" 
+                       class="action-btn" style="background: #28a745; color: white;">
+                        Create Order
+                    </a>
+                    <a href="{{ path('admin_custom_request_show', {id: request.id}) }}" 
+                       class="action-btn edit">
+                        View
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #999;">No approved requests available</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    {% if approvedRequests|length > 0 %}
+    $('#approvedRequestsTable').DataTable({
+        "pageLength": 25,
+        "order": [[4, "desc"]],
+        "language": {
+            "emptyTable": "No approved requests available for orders"
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

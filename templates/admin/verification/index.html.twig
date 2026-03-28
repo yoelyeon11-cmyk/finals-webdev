@@ -1,0 +1,110 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Verification - Cloudrobe{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h2>Request Verification</h2>
+</div>
+
+{% for label, messages in app.flashes %}
+    <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+{% endfor %}
+
+<div class="table-section">
+    <table id="verificationTable" class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Character/Design</th>
+                <th>Estimated Cost</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+                    {% for request in pendingRequests %}
+                    <tr>
+                        <td>{{ request.id }}</td>
+                        <td>{{ request.customerName }}</td>
+                        <td>{{ request.cosplayCharacter ?: 'Custom Design' }}</td>
+                        <td>
+                            {% if request.estimatedCost %}
+                                ₱{{ request.estimatedCost|number_format(2) }}
+                            {% else %}
+                                <span class="text-muted">Pending quote</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if request.status == 'new_request' %}
+                                <span class="badge bg-primary">New Request</span>
+                            {% elseif request.status == 'awaiting_approval' %}
+                                <span class="badge bg-warning">Awaiting Approval</span>
+                            {% elseif request.status == 'quote_sent' %}
+                                <span class="badge bg-info">Quote Sent</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ request.statusLabel }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ request.createdAt|date('M d, Y') }}</td>
+                        <td>
+                            <a href="{{ path('admin_verification_review', {id: request.id}) }}" 
+                               class="action-btn edit"
+                               title="Review Details">
+                                <svg fill="currentColor" viewBox="0 0 20 20" style="width: 14px; height: 14px; display: inline-block;">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </a>
+                            <form method="post" action="{{ path('admin_verification_approve', {id: request.id}) }}" style="display: inline-block; margin: 0;" onsubmit="return confirm('Approve this request?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('approve_' ~ request.id) }}">
+                                <button type="submit" class="action-btn" style="background: #28a745; color: white; border: none; cursor: pointer;" title="Approve">
+                                    <svg fill="currentColor" viewBox="0 0 20 20" style="width: 14px; height: 14px; display: inline-block;">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            </form>
+                            <form method="post" action="{{ path('admin_verification_reject', {id: request.id}) }}" style="display: inline-block; margin: 0;" onsubmit="return confirm('Reject this request?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('reject_' ~ request.id) }}">
+                                <button type="submit" class="action-btn delete" style="border: none; cursor: pointer;" title="Reject">
+                                    <svg fill="currentColor" viewBox="0 0 20 20" style="width: 14px; height: 14px; display: inline-block;">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No requests pending verification</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    {% if pendingRequests|length > 0 %}
+    $('#verificationTable').DataTable({
+        "pageLength": 25,
+        "order": [[5, "desc"]],
+        "language": {
+            "emptyTable": "No requests pending verification"
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

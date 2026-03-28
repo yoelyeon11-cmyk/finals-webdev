@@ -81,7 +81,7 @@
 
 {% block body %}
 <div class="header">
-    <h2>Dashbgoard</h2>
+    <h2>Dashboard</h2>
     <div class="header-actions">
     </div>
 </div>
@@ -148,10 +148,6 @@
                     {% endif %}
                 </td>
             </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 30px;">No products found</td>
-            </tr>
             {% endfor %}
         </tbody>
     </table>
@@ -180,6 +176,8 @@
                     lengthMenu: "Show _MENU_ products per page",
                     info: "Showing _START_ to _END_ of _TOTAL_ products",
                     infoEmpty: "No products available",
+                    emptyTable: "No products found in the database",
+                    zeroRecords: "No matching products found",
                     infoFiltered: "(filtered from _MAX_ total products)",
                     paginate: {
                         first: "First",

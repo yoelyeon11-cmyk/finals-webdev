@@ -1,0 +1,279 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}My Profile | Cloudrobe Admin{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary: #ecc9c9;
+            --secondary: #df9152;
+            --accent: #e5a3a3;
+            --dark: #5c3a3a;
+            --light: #fdf6f6;
+        }
+
+        .profile-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(229, 163, 163, 0.4);
+            margin: -30px -30px 2rem -30px;
+            width: calc(100% + 60px);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .profile-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 0 0 0.5rem 0;
+            color: var(--dark);
+        }
+
+        .profile-role {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            color: var(--dark);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin: 0 auto 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-bio {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+            margin-bottom: 2rem;
+            color: var(--dark);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .profile-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(92, 58, 58, 0.12);
+        }
+
+        .profile-card h2 {
+            color: var(--dark);
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.875rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        .badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-admin {
+            background: linear-gradient(135deg, var(--secondary), #c97642);
+            color: white;
+        }
+
+        .badge-staff {
+            background: var(--accent);
+            color: var(--dark);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            text-align: center;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary), #c97642);
+            color: white;
+            box-shadow: 0 4px 10px rgba(223, 145, 82, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(223, 145, 82, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: var(--dark);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #dc2626;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {% if user.profilePicture %}
+                    <img src="{{ user.profilePicture }}" alt="{{ user.fullName }}">
+                {% else %}
+                    {{ user.fullName|slice(0, 1)|upper }}
+                {% endif %}
+            </div>
+            <h1>{{ user.fullName }}</h1>
+            <div class="profile-role">
+                {% if is_granted('ROLE_ADMIN') %}
+                    <span class="badge badge-admin">Administrator</span>
+                {% elseif is_granted('ROLE_STAFF') %}
+                    <span class="badge badge-staff">Staff Member</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-error">{{ message }}</div>
+        {% endfor %}
+
+        {% if user.bio %}
+        <div class="profile-bio">
+            <strong style="color: var(--secondary); display: block; margin-bottom: 0.5rem;">Bio</strong>
+            {{ user.bio|nl2br }}
+        </div>
+        {% endif %}
+
+        <div class="profile-cards">
+            <div class="profile-card">
+                <h2>Account Information</h2>
+                <div class="info-row">
+                    <span class="info-label">Username</span>
+                    <span class="info-value">{{ user.username }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Full Name</span>
+                    <span class="info-value">{{ user.fullName }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">{{ user.email }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Role</span>
+                    <span class="info-value">
+                        {% if is_granted('ROLE_ADMIN') %}
+                            Administrator
+                        {% elseif is_granted('ROLE_STAFF') %}
+                            Staff Member
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="profile-card">
+                <h2>Quick Actions</h2>
+                <p style="color: #666; margin-bottom: 1.5rem;">Manage your account settings and security</p>
+                <div class="action-buttons">
+                    <a href="{{ path('app_profile_edit') }}" class="btn btn-primary">
+                        Edit Profile
+                    </a>
+                </div>
+                <div class="action-buttons">
+                    <a href="{{ path('app_profile_change_password') }}" class="btn btn-secondary">
+                        Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
