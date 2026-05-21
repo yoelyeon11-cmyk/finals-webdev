@@ -5,6 +5,21 @@ cd /app
 
 echo "[railway] APP_ENV=${APP_ENV:-unset}"
 
+# DATABASE_URL must come from Railway (Reference → MySQL → MYSQL_URL)
+if [ -z "${DATABASE_URL}" ]; then
+  echo "[railway] ERROR: DATABASE_URL is not set."
+  echo "[railway] In Railway: web service → Variables → Add Reference → MySQL → MYSQL_URL"
+  exit 1
+fi
+case "${DATABASE_URL}" in
+  *'use Reference'*|*'${{'*|*'CHANGE_ME'*|*'USER:PASS'*)
+    echo "[railway] ERROR: DATABASE_URL looks like a placeholder, not a real MySQL URL."
+    echo "[railway] Delete the variable and re-add it with: Add Reference → MySQL → MYSQL_URL"
+    exit 1
+    ;;
+esac
+echo "[railway] DATABASE_URL is set (host hidden)"
+
 # JWT keys (not in git — generate on first boot if missing)
 if [ ! -f config/jwt/private.pem ] || [ ! -f config/jwt/public.pem ]; then
   if [ -z "${JWT_PASSPHRASE}" ]; then
