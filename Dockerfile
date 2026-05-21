@@ -44,7 +44,11 @@ FROM php-base AS runtime
 
 WORKDIR /app
 
-ENV COMPOSER_ALLOW_SUPERUSER=1
+# Must be set before Composer scripts (cache:clear) — .env defaults to dev
+ENV APP_ENV=prod \
+    APP_DEBUG=0 \
+    APP_SECRET=build-placeholder-override-in-railway \
+    COMPOSER_ALLOW_SUPERUSER=1
 
 COPY composer.json composer.lock symfony.lock ./
 COPY --from=vendor /app/vendor ./vendor
@@ -62,9 +66,6 @@ RUN composer install \
     && php bin/console assets:install public --env=prod --no-interaction \
     && mkdir -p var/cache var/log config/jwt public/uploads/products public/uploads/profiles \
     && chmod -R 775 var config/jwt public/uploads
-
-ENV APP_ENV=prod \
-    APP_DEBUG=0
 
 EXPOSE 8080
 
