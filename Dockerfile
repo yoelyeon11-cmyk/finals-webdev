@@ -18,7 +18,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# --- Composer (needed before npm — package.json references vendor/symfony/ux-turbo) ---
+# --- Composer vendor (for npm build — scripts not required here) ---
 FROM php-base AS vendor
 
 COPY composer.json composer.lock symfony.lock ./
@@ -44,18 +44,21 @@ FROM php-base AS runtime
 
 WORKDIR /app
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 COPY composer.json composer.lock symfony.lock ./
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --no-scripts \
-    --prefer-dist \
-    --optimize-autoloader
+COPY --from=vendor /app/vendor ./vendor
 
 COPY . .
 COPY --from=assets /app/public/build ./public/build
 
-RUN composer dump-autoload --classmap-authoritative --no-dev \
+# Run Composer scripts so vendor/autoload_runtime.php exists (required by bin/console)
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader \
+    --classmap-authoritative \
     && php bin/console assets:install public --env=prod --no-interaction \
     && mkdir -p var/cache var/log config/jwt public/uploads/products public/uploads/profiles \
     && chmod -R 775 var config/jwt public/uploads
