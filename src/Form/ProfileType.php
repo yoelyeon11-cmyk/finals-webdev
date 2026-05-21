@@ -23,22 +23,22 @@ class ProfileType extends AbstractType
                 'label' => 'Username',
                 'required' => true,
                 'constraints' => [
-                    new NotBlank(['message' => 'Username cannot be blank']),
+                    new NotBlank(message: 'Username cannot be blank'),
                 ],
             ])
             ->add('email', EmailType::class, [
                 'label' => 'Email',
                 'required' => true,
                 'constraints' => [
-                    new NotBlank(['message' => 'Email cannot be blank']),
-                    new Email(['message' => 'Please enter a valid email address']),
+                    new NotBlank(message: 'Email cannot be blank'),
+                    new Email(message: 'Please enter a valid email address'),
                 ],
             ])
             ->add('fullName', TextType::class, [
                 'label' => 'Full Name',
                 'required' => true,
                 'constraints' => [
-                    new NotBlank(['message' => 'Full name cannot be blank']),
+                    new NotBlank(message: 'Full name cannot be blank'),
                 ],
             ])
             ->add('bio', TextareaType::class, [
@@ -54,11 +54,12 @@ class ProfileType extends AbstractType
                 'mapped' => false,
                 'required' => false,
                 'constraints' => [
-                    new File([
-                        'maxSize' => '5M',
-                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'],
-                        'mimeTypesMessage' => 'Please upload a valid image (JPEG, PNG, GIF)',
-                    ])
+                    new File(
+                        maxSize: '10M',
+                        mimeTypes: ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'],
+                        mimeTypesMessage: 'Please upload a valid image (JPEG, PNG, GIF, or WebP).',
+                        maxSizeMessage: 'The file is too large ({{ size }} {{ suffix }}). Maximum allowed size is {{ limit }} {{ suffix }}.',
+                    ),
                 ],
                 'attr' => [
                     'accept' => 'image/*'

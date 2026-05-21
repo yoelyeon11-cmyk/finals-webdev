@@ -100,28 +100,35 @@
     <div style="margin-top: 30px; padding: 20px; background: var(--light); border-radius: 8px;">
         <h4 style="margin-bottom: 15px;">Update Order Status</h4>
         <form method="post" action="{{ path('admin_order_update_status', {id: order.id}) }}">
+            {% set statusFlow = ['new_order', 'preparing', 'ready_to_ship', 'shipping', 'delivered'] %}
+            {% set currentIndex = -1 %}
+            {% for s in statusFlow %}
+                {% if s == order.status %}
+                    {% set currentIndex = loop.index0 %}
+                {% endif %}
+            {% endfor %}
             <div class="form-row">
                 <div class="form-group">
                     <label for="order_status">Order Status</label>
-                    <select name="order[status]" id="order_status" class="form-control">
-                        <option value="new_order" {{ order.status == 'new_order' ? 'selected' : '' }}>New Order</option>
-                        <option value="preparing" {{ order.status == 'preparing' ? 'selected' : '' }}>Preparing Order</option>
-                        <option value="ready_to_ship" {{ order.status == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
-                        <option value="shipping" {{ order.status == 'shipping' ? 'selected' : '' }}>Shipping</option>
+                    <select name="order[status]" id="order_status" class="form-control" {{ order.status == 'delivered' ? 'disabled' : '' }}>
+                        <option value="new_order" {{ order.status == 'new_order' ? 'selected' : '' }} {{ currentIndex > 0 ? 'disabled' : '' }}>New Order</option>
+                        <option value="preparing" {{ order.status == 'preparing' ? 'selected' : '' }} {{ currentIndex > 1 ? 'disabled' : '' }}>Preparing Order</option>
+                        <option value="ready_to_ship" {{ order.status == 'ready_to_ship' ? 'selected' : '' }} {{ currentIndex > 2 ? 'disabled' : '' }}>Ready to Ship</option>
+                        <option value="shipping" {{ order.status == 'shipping' ? 'selected' : '' }} {{ currentIndex > 3 ? 'disabled' : '' }}>Shipping</option>
                         <option value="delivered" {{ order.status == 'delivered' ? 'selected' : '' }}>Delivered/Completed</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="order_shippingCarrier">Shipping Carrier</label>
-                    <input type="text" name="order[shippingCarrier]" id="order_shippingCarrier" class="form-control" placeholder="e.g., FedEx, UPS, USPS" value="{{ order.shippingCarrier }}">
+                    <input type="text" name="order[shippingCarrier]" id="order_shippingCarrier" class="form-control" placeholder="e.g., FedEx, UPS, USPS" value="{{ order.shippingCarrier }}" {{ order.status == 'delivered' ? 'disabled' : '' }}>
                 </div>
                 <div class="form-group">
                     <label for="order_trackingNumber">Tracking Number</label>
-                    <input type="text" name="order[trackingNumber]" id="order_trackingNumber" class="form-control" placeholder="Enter tracking number" value="{{ order.trackingNumber }}">
+                    <input type="text" name="order[trackingNumber]" id="order_trackingNumber" class="form-control" placeholder="Enter tracking number" value="{{ order.trackingNumber }}" {{ order.status == 'delivered' ? 'disabled' : '' }}>
                 </div>
             </div>
             <input type="hidden" name="_token" value="{{ csrf_token('order_status_' ~ order.id) }}">
-            <button type="submit" class="btn btn-primary">Update Status</button>
+            <button type="submit" class="btn btn-primary" {{ order.status == 'delivered' ? 'disabled' : '' }}>Update Status</button>
         </form>
     </div>
 

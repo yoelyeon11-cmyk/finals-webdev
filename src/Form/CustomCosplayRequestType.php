@@ -90,7 +90,10 @@ class CustomCosplayRequestType extends AbstractType
                 'currency' => 'USD',
                 'attr' => ['class' => 'form-control', 'placeholder' => '0.00'],
             ])
-            ->add('status', ChoiceType::class, [
+        ;
+
+        if ($options['include_status']) {
+            $builder->add('status', ChoiceType::class, [
                 'label' => 'Status',
                 'choices' => [
                     'New Request' => 'new_request',
@@ -100,14 +103,15 @@ class CustomCosplayRequestType extends AbstractType
                     'Rejected' => 'rejected',
                 ],
                 'attr' => ['class' => 'form-control'],
-            ])
-        ;
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => CustomCosplayRequest::class,
+            'include_status' => true,
         ]);
     }
 }

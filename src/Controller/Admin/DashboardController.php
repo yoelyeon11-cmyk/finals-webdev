@@ -47,7 +47,7 @@ class DashboardController extends AbstractController
             'newCategories' => 2,
         ];
 
-        $recentProducts = $productRepository->findBy([], ['id' => 'DESC'], 10);
+        $recentProducts = $productRepository->findBy([], ['id' => 'DESC']);
 
         return $this->render('admin/dashboard/index.html.twig', [
             'stats' => $stats,

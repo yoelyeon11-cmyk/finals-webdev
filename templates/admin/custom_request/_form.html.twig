@@ -87,18 +87,20 @@
 </div>
 
 <div class="form-section">
-    <h3>Quote & Status</h3>
+    <h3>{{ form.status is defined ? 'Quote & Status' : 'Quote' }}</h3>
     <div class="form-row">
         <div class="form-group">
             {{ form_label(form.estimatedCost) }}
             {{ form_widget(form.estimatedCost) }}
             {{ form_errors(form.estimatedCost) }}
         </div>
-        <div class="form-group">
-            {{ form_label(form.status) }}
-            {{ form_widget(form.status) }}
-            {{ form_errors(form.status) }}
-        </div>
+        {% if form.status is defined %}
+            <div class="form-group">
+                {{ form_label(form.status) }}
+                {{ form_widget(form.status) }}
+                {{ form_errors(form.status) }}
+            </div>
+        {% endif %}
     </div>
 </div>
 

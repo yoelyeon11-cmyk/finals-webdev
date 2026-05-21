@@ -1,0 +1,361 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Contact us | Cloudrobe{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% include 'partials/_public_theme_styles.html.twig' %}
+    <style>
+        .contact-main {
+            background: var(--light-bg);
+            min-height: 50vh;
+        }
+
+        .contact-hero {
+            padding: clamp(2.5rem, 8vw, 4rem) clamp(1rem, 4vw, 2rem);
+            background: linear-gradient(135deg, var(--secondary-pink) 0%, var(--primary-pink) 50%, var(--accent-orange) 100%);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.18) 0%, transparent 45%);
+            pointer-events: none;
+        }
+
+        .contact-hero-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 38rem;
+            margin: 0 auto;
+        }
+
+        .contact-hero h1 {
+            font-size: clamp(1.85rem, 5vw, 2.75rem);
+            font-weight: 800;
+            color: var(--white);
+            margin: 0 0 0.75rem;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .contact-hero .lead {
+            font-size: clamp(1rem, 2.8vw, 1.15rem);
+            line-height: 1.65;
+            color: rgba(255, 255, 255, 0.96);
+            margin: 0;
+        }
+
+        .contact-layout {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: clamp(2rem, 6vw, 3.5rem) clamp(1rem, 4vw, 2rem);
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+            gap: clamp(2rem, 5vw, 3rem);
+            align-items: start;
+        }
+
+        .contact-aside {
+            background: var(--white);
+            border-radius: 18px;
+            padding: 1.75rem 1.5rem;
+            border: 1px solid var(--border-soft);
+            box-shadow: 0 8px 28px rgba(92, 58, 58, 0.08);
+        }
+
+        .contact-aside h2 {
+            font-size: 1.15rem;
+            margin: 0 0 1rem;
+            color: var(--dark-text);
+        }
+
+        .contact-aside p,
+        .contact-aside li {
+            font-size: 0.95rem;
+            line-height: 1.65;
+            margin: 0 0 0.75rem;
+            opacity: 0.92;
+        }
+
+        .contact-aside ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .contact-aside a {
+            color: var(--accent-orange);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .contact-aside a:hover {
+            text-decoration: underline;
+        }
+
+        .contact-form-card {
+            background: var(--white);
+            border-radius: 18px;
+            padding: clamp(1.5rem, 4vw, 2.25rem);
+            border: 1px solid var(--border-soft);
+            box-shadow: 0 8px 28px rgba(92, 58, 58, 0.08);
+        }
+
+        .contact-form-card h2 {
+            font-size: 1.2rem;
+            margin: 0 0 1.25rem;
+            color: var(--dark-text);
+        }
+
+        .brevo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            background: rgba(223, 145, 82, 0.12);
+            border: 1px solid rgba(223, 145, 82, 0.35);
+            border-radius: 999px;
+            padding: 0.35rem 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .flash-messages {
+            margin-bottom: 1.25rem;
+        }
+
+        .flash-messages[aria-live] {
+            min-height: 0;
+        }
+
+        .flash-messages:not(:empty) {
+            min-height: 2.5rem;
+        }
+
+        .flash {
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 0.65rem;
+        }
+
+        .flash-success {
+            background: rgba(223, 145, 82, 0.15);
+            border: 1px solid var(--accent-orange);
+            color: var(--dark-text);
+        }
+
+        .flash-danger {
+            background: rgba(229, 163, 163, 0.25);
+            border: 1px solid var(--secondary-pink);
+            color: var(--dark-text);
+        }
+
+        .contact-form label,
+        .contact-form .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            font-size: 0.92rem;
+            color: var(--dark-text);
+        }
+
+        .contact-form input[type="text"],
+        .contact-form input[type="email"],
+        .contact-form textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 2px solid var(--border-soft);
+            font-size: 1rem;
+            font-family: inherit;
+            margin-bottom: 0.25rem;
+            box-sizing: border-box;
+        }
+
+        .contact-form input:focus,
+        .contact-form textarea:focus {
+            outline: none;
+            border-color: var(--secondary-pink);
+            box-shadow: 0 0 0 3px rgba(229, 163, 163, 0.25);
+        }
+
+        .contact-form .invalid-feedback,
+        .contact-form ul.form-error {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 0.75rem;
+            font-size: 0.85rem;
+            color: #a94442;
+        }
+
+        .contact-form .form-group,
+        .contact-form .mb-3 {
+            margin-bottom: 1.1rem;
+        }
+
+        .contact-form .btn-submit {
+            background: linear-gradient(135deg, var(--secondary-pink), var(--accent-orange));
+            color: var(--white);
+            padding: 0.85rem 2rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            margin-top: 0.25rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .contact-form .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(223, 145, 82, 0.35);
+        }
+
+        .contact-form .btn-submit:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .contact-social {
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-soft);
+        }
+
+        .social-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .social-item {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-size: 0.95rem;
+            color: var(--dark-text);
+        }
+
+        .social-icon {
+            width: 1.45rem;
+            text-align: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            color: var(--secondary-pink);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .social-icon svg {
+            width: 1rem;
+            height: 1rem;
+            display: block;
+        }
+
+        .social-item a {
+            color: var(--accent-orange);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .social-item a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 900px) {
+            .contact-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="public-site">
+    {% include 'partials/public_header.html.twig' %}
+
+    <main class="contact-main">
+        <section class="contact-hero" aria-labelledby="contact-heading">
+            <div class="contact-hero-inner">
+                <h1 id="contact-heading">Contact us</h1>
+                <p class="lead">Questions about sizing, a custom commission, or an order? Send a note—we read everything.</p>
+            </div>
+        </section>
+
+        <div class="contact-layout">
+            <div class="contact-form-card">
+                <h2>Send a message</h2>
+                <p class="brevo-badge" title="Transactional email via Brevo SMTP">Delivered securely via Brevo</p>
+
+                <div class="flash-messages" aria-live="polite" aria-atomic="true">
+                    {% for message in app.flashes('success') %}
+                        <div class="flash flash-success" role="status">{{ message }}</div>
+                    {% endfor %}
+                    {% for message in app.flashes('danger') %}
+                        <div class="flash flash-danger" role="alert">{{ message }}</div>
+                    {% endfor %}
+                </div>
+
+                {{ form_start(form, { attr: { id: 'contact-form', class: 'contact-form', novalidate: 'novalidate', 'data-turbo': 'false' } }) }}
+                    {{ form_row(form.name) }}
+                    {{ form_row(form.email) }}
+                    {{ form_row(form.subject) }}
+                    {{ form_row(form.message) }}
+                    <button type="submit" class="btn-submit">Send message</button>
+                {{ form_end(form) }}
+            </div>
+
+            <aside class="contact-aside" aria-label="Other ways to reach us">
+                <h2>Connect with Cloudrobe</h2>
+                <p>If you already placed an order, include your order number, character/product name, and event date so we can help faster.</p>
+                <p><strong>Typical reply time:</strong> within one business day.</p>
+
+                <div class="contact-social">
+                    <ul class="social-list">
+                        <li class="social-item">
+                            <span class="social-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M13.5 22v-8.2h2.8l.4-3.2h-3.2V8.6c0-.9.3-1.6 1.6-1.6h1.7V4.1c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.3v2.4H7.5v3.2h2.7V22h3.3Z"/>
+                                </svg>
+                            </span>
+                            <span>Facebook: <a href="#" rel="noopener">cloudrobeofficial</a></span>
+                        </li>
+                        <li class="social-item">
+                            <span class="social-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect>
+                                    <circle cx="12" cy="12" r="4"></circle>
+                                    <circle cx="17.5" cy="6.5" r="1"></circle>
+                                </svg>
+                            </span>
+                            <span>Instagram: <a href="#" rel="noopener">@cloudrobe</a></span>
+                        </li>
+                        <li class="social-item">
+                            <span class="social-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                                    <path d="m3 7 9 6 9-6"></path>
+                                </svg>
+                            </span>
+                            <span>Email: <a href="mailto:support@cloudrobe.com">support@cloudrobe.com</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    {% include 'partials/public_footer.html.twig' %}
+    {% include 'partials/public_search_script.html.twig' %}
+</div>
+{% endblock %}

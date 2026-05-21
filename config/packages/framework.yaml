@@ -18,6 +18,12 @@ framework:
     #esi: true
     #fragments: true
 
+when@prod:
+    framework:
+        # Railway / reverse proxy — HTTPS and correct host for URLs & CSRF
+        trusted_proxies: 'REMOTE_ADDR'
+        trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-host']
+
 when@test:
     framework:
         test: true

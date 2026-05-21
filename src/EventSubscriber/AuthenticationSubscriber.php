@@ -4,6 +4,7 @@ namespace App\EventSubscriber;
 
 use App\Service\ActivityLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
 
@@ -45,5 +46,12 @@ class AuthenticationSubscriber implements EventSubscriberInterface
                 'User "' . $user->getUserIdentifier() . '" logged out'
             );
         }
+        
+        // Prevent back button access with cache-control headers
+        $response = new RedirectResponse('/login');
+        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
+        $event->setResponse($response);
     }
 }

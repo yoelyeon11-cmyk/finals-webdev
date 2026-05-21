@@ -29,12 +29,12 @@
     <div style="max-width: 800px;">
         <form method="post" action="{{ path('admin_order_place') }}">
             <div class="form-group">
-                <label for="customer_name">Customer Name *</label>
+                <label for="customer_name">Customer Name</label>
                 <input type="text" class="form-control" id="customer_name" name="order[customerName]" required>
             </div>
 
             <div class="form-group">
-                <label for="customer_email">Customer Email *</label>
+                <label for="customer_email">Customer Email</label>
                 <input type="email" class="form-control" id="customer_email" name="order[customerEmail]" required>
             </div>
 
@@ -44,7 +44,7 @@
             </div>
 
             <div class="form-group">
-                <label for="products">Select Products *</label>
+                <label for="products">Select Products</label>
                 <select multiple class="form-control" id="products" name="products[]" required style="height: 150px;">
                     {% for product in products %}
                         <option value="{{ product.id }}" data-price="{{ product.price }}">
@@ -52,17 +52,17 @@
                         </option>
                     {% endfor %}
                 </select>
-                <small style="color: #999; display: block; margin-top: 5px;">Hold Ctrl (or Cmd on Mac) to select multiple products</small>
+                <small style="color: #999; display: block; margin-top:5px;"></small>
             </div>
 
             <div class="form-group">
-                <label for="quantities">Quantities (comma-separated) *</label>
+                <label for="quantities">Quantities</label>
                 <input type="text" class="form-control" id="quantities" name="quantities" placeholder="e.g., 1,2,1" required>
-                <small style="color: #999; display: block; margin-top: 5px;">Enter quantity for each selected product in order, separated by commas</small>
+                <small style="color: #999; display: block; margin-top: 5px;">Enter quantity for each selected product in order</small>
             </div>
 
             <div class="form-group">
-                <label for="total_amount">Total Amount (₱) *</label>
+                <label for="total_amount">Total Amount (₱)</label>
                 <input type="number" step="0.01" class="form-control" id="total_amount" name="order[totalAmount]" required readonly>
                 <small style="color: #999; display: block; margin-top: 5px;">Total will be calculated automatically</small>
             </div>

@@ -1,3 +1,6 @@
 framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
+        # Send immediately so contact form feedback is accurate
+        # (instead of "queued" when no messenger worker is running).
+        message_bus: false

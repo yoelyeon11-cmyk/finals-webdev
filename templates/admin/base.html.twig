@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="Thu, 01 Jan 1970 00:00:00 GMT">
     <title>{% block title %}Cloudrobe Admin{% endblock %}</title>
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
     {% block stylesheets %}{% endblock %}
@@ -17,88 +20,110 @@
                 <p>Cosplay Store Admin</p>
             </div>
 
-            <div class="sidebar-nav">
+            <nav class="sidebar-nav">
+            <ul>
+            <li>
             <a href="{{ path('admin_dashboard') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_dashboard' ? 'active' : '' }}">
                 <svg fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-                Dashboard
+                <span class="nav-label">Dashboard</span>
             </a>
+            </li>
+            <li>
             <a href="{{ path('admin_product_index') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_product' ? 'active' : '' }}">
                 <svg fill="currentColor" viewBox="0 0 20 20"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"></path></svg>
-                Products
+                <span class="nav-label">Products</span>
             </a>
-
+            </li>
+            <li>
             {# Custom Cosplay Requests - Staff Access #}
             <a href="{{ path('admin_custom_request_index') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_custom_request' ? 'active' : '' }}">
                 <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
-                Custom Requests
+                <span class="nav-label">Custom Requests</span>
             </a>
-
+            </li>
+            <li>
             {# Verification - Staff Access #}
             <a href="{{ path('admin_verification_index') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_verification' ? 'active' : '' }}">
                 <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                Verification
+                <span class="nav-label">Verification</span>
             </a>
-
+            </li>
+            <li>
             {# Place Order - Staff Access #}
             <a href="{{ path('admin_order_place') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_order_place' ? 'active' : '' }}">
                 <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
-                Place Order
+                <span class="nav-label">Place Order</span>
             </a>
-
+            </li>
+            <li>
             {# Order Status - Staff Access #}
             <a href="{{ path('admin_order_status') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_order_status' ? 'active' : '' }}">
                 <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                Order Status
+                <span class="nav-label">Order Status</span>
             </a>
-            
-            {# Only Admin can access Categories #}
-            {% if is_granted('ROLE_ADMIN') %}
+            </li>
+            <li>
+            {# Categories - Staff Access #}
+            {% if is_granted('ROLE_STAFF') %}
                 <a href="{{ path('admin_category_index') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_category' ? 'active' : '' }}">
                     <svg fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"></path></svg>
-                    Categories
+                    <span class="nav-label">Categories</span>
                 </a>
             {% endif %}
-
-            {# Only Admin can access Inventory #}
-            {% if is_granted('ROLE_ADMIN') %}
+            </li>
+            {% if is_granted('ROLE_STAFF') %}
+            <li>
+            {# Inventory - Staff Access #}
                 <a href="{{ path('admin_inventory_index') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_inventory' ? 'active' : '' }}">
                     <svg fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Inventory
+                    <span class="nav-label">Inventory</span>
                 </a>
+            </li>
             {% endif %}
 
             {# Only Admin can access User Management #}
             {% if is_granted('ROLE_ADMIN') %}
+            <li class="nav-divider" aria-hidden="true"></li>
+            <li>
                 <a href="{{ path('admin_user_index') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_user' ? 'active' : '' }}">
                     <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>
-                    User Management
+                    <span class="nav-label">User Management</span>
                 </a>
+            </li>
             {% endif %}
 
             {# Only Admin can access Activity Logs #}
             {% if is_granted('ROLE_ADMIN') %}
+            <li>
                 <a href="{{ path('admin_activity_logs') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_activity' ? 'active' : '' }}">
                     <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                    Activity Log
+                    <span class="nav-label">Activity Log</span>
                 </a>
+            </li>
             {% endif %}
 
             {# Profile as navigation item #}
             {% if app.user %}
+            <li class="nav-divider" aria-hidden="true"></li>
+            <li>
                 <a href="{{ path('app_profile') }}" class="nav-item {{ app.request.attributes.get('_route') starts with 'app_profile' ? 'active' : '' }}">
                     <svg fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
                     </svg>
-                    My Profile
+                    <span class="nav-label">My Profile</span>
                 </a>
+            </li>
+            <li>
                 <a href="{{ path('app_logout') }}" class="nav-item">
                     <svg fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"></path>
                     </svg>
-                    Logout
+                    <span class="nav-label">Logout</span>
                 </a>
+            </li>
             {% endif %}
-            </div>
+            </ul>
+            </nav>
         </div>
 
         <!-- Main Content -->
@@ -109,6 +134,21 @@
 
     {% block javascripts %}
     <script>
+        // Session validation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is still authenticated
+            fetch('{{ path("admin_dashboard") }}', { credentials: 'include' })
+                .then(response => {
+                    // If not authenticated, redirect to login
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = '{{ path("app_login") }}';
+                    }
+                })
+                .catch(() => {
+                    // On network error, still allow page to load
+                });
+        });
+
         // Console debug logging from flash messages
         {% for message in app.flashes('console_debug') %}
             console.log('{{ message|raw }}');

@@ -30,7 +30,7 @@ class ProductController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_product_new')]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_STAFF')]
     public function new(Request $request, EntityManagerInterface $em, ActivityLogger $logger, LoggerInterface $consoleLogger): Response
     {
         $product = new Products();
@@ -102,7 +102,7 @@ public function edit(Request $request, Products $product, EntityManagerInterface
 }
 
     #[Route('/{id}', name: 'admin_product_delete', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_STAFF')]
     public function delete(Request $request, Products $product, EntityManagerInterface $em, ActivityLogger $logger, LoggerInterface $consoleLogger): Response
     {
         if ($this->isCsrfTokenValid('delete'.$product->getId(), $request->request->get('_token'))) {

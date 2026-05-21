@@ -1,0 +1,5 @@
+# Use synchronous delivery in tests so Mailer does not enqueue to the async Doctrine transport.
+framework:
+    messenger:
+        transports:
+            async: 'sync://'

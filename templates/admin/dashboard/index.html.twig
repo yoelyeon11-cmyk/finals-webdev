@@ -90,12 +90,12 @@
     <div class="stat-card">
         <h3>Total Products</h3>
         <div class="number">{{ stats.totalProducts }}</div>
-        <div class="change">+{{ stats.productsGrowth }}% </div>
+        <div class="change"></div>
     </div>
     <div class="stat-card">
         <h3>Categories</h3>
         <div class="number">{{ stats.totalCategories }}</div>
-        <div class="change">+{{ stats.newCategories }} </div>
+        <div class="change"></div>
     </div>
     <div class="stat-card">
         <h3>Low Stock Items</h3>
@@ -105,7 +105,7 @@
     <div class="stat-card">
         <h3>Total Value</h3>
         <div class="number">₱{{ stats.totalValue|number_format(0, '.', ',') }}</div>
-        <div class="change">+{{ stats.valueGrowth }}% from last month</div>
+        <div class="change"></div>
     </div>
 </div>
 
@@ -116,7 +116,6 @@
     <table id="productsTable" class="display responsive nowrap" style="width:100%">
         <thead>
             <tr>
-                <th>Image</th>
                 <th>Product Name</th>
                 <th>Category</th>
                 <th>Stock</th>
@@ -127,13 +126,6 @@
         <tbody>
             {% for product in recentProducts %}
             <tr>
-                <td>
-                    {% if product.image %}
-                        <img src="{{ asset('uploads/products/' ~ product.image) }}" alt="{{ product.name }}" class="product-img">
-                    {% else %}
-                        <div style="width:50px;height:50px;background:var(--accent);border-radius:8px;"></div>
-                    {% endif %}
-                </td>
                 <td>{{ product.name }}</td>
                 <td>{{ product.category ? product.category.name : 'No Category' }}</td>    
                 <td data-order="{{ product.stock }}">{{ product.stock }}</td>
@@ -163,14 +155,8 @@
         $(document).ready(function() {
             $('#productsTable').DataTable({
                 responsive: true,
-                pageLength: 10,
-                order: [[1, 'asc']], // Sort by Product Name by default
-                columnDefs: [
-                    { 
-                        orderable: false, 
-                        targets: 0 // Disable sorting on Image column
-                    }
-                ],
+                pageLength: 25,
+                order: [[0, 'asc']], // Sort by Product Name by default
                 language: {
                     search: "Search products:",
                     lengthMenu: "Show _MENU_ products per page",

@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
@@ -53,11 +54,31 @@ class UserType extends AbstractType
                     'Staff' => 'ROLE_STAFF',
                     'Admin' => 'ROLE_ADMIN',
                 ],
-                'multiple' => true,
+                'multiple' => false,
                 'expanded' => true,
                 'required' => true,
             ])
         ;
+
+        $builder->get('roles')->addModelTransformer(new CallbackTransformer(
+            function (?array $storedRoles): string {
+                $storedRoles = $storedRoles ?? [];
+                if (\in_array('ROLE_ADMIN', $storedRoles, true)) {
+                    return 'ROLE_ADMIN';
+                }
+                if (\in_array('ROLE_STAFF', $storedRoles, true)) {
+                    return 'ROLE_STAFF';
+                }
+
+                return 'ROLE_STAFF';
+            },
+            function (?string $selected): array {
+                return match ($selected) {
+                    'ROLE_ADMIN', 'ROLE_STAFF' => [$selected],
+                    default => ['ROLE_STAFF'],
+                };
+            }
+        ));
     }
 
     public function configureOptions(OptionsResolver $resolver): void

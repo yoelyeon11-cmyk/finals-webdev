@@ -1,0 +1,247 @@
+<style>
+        html {
+            scroll-padding-top: var(--site-header-offset);
+        }
+
+        :root {
+            --primary-pink: #ecc9c9;
+            --secondary-pink: #e5a3a3;
+            --accent-orange: #df9152;
+            --dark-text: #5c3a3a;
+            --white: #ffffff;
+            --light-bg: #fdf6f6;
+            --border-soft: #e8d4d4;
+            /* Space for fixed header (one row); widened on small screens when search wraps */
+            --site-header-offset: 6.75rem;
+            --header-max-width: 1180px;
+        }
+
+        .public-site {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--dark-text);
+            padding-top: var(--site-header-offset);
+        }
+
+        .header {
+            background: #e5a3a3;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .header-container {
+            max-width: var(--header-max-width);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: auto minmax(240px, 1fr) auto;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .logo img {
+            width: min(200px, 42vw);
+            max-width: 200px;
+            height: auto;
+            min-height: 48px;
+            max-height: 70px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .search-container {
+            width: 100%;
+            max-width: 440px;
+            justify-self: center;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-pink);
+        }
+
+        .search-button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-pink);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: clamp(0.75rem, 3vw, 2rem);
+            align-items: center;
+            justify-content: flex-end;
+            justify-self: end;
+            white-space: nowrap;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--dark-text);
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-pink);
+        }
+
+        .nav-link[aria-current="page"] {
+            color: var(--white);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+
+        .auth-btn {
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 0.46rem 0.9rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.1;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .auth-btn-login {
+            color: var(--dark-text);
+            border-color: rgba(92, 58, 58, 0.25);
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .auth-btn-login:hover {
+            background: var(--white);
+            border-color: var(--secondary-pink);
+        }
+
+        .auth-btn-signup {
+            color: var(--white);
+            background: linear-gradient(135deg, var(--secondary-pink), var(--accent-orange));
+            box-shadow: 0 6px 16px rgba(223, 145, 82, 0.2);
+        }
+
+        .auth-btn-signup:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(223, 145, 82, 0.3);
+        }
+
+        .site-footer {
+            background: var(--dark-text);
+            color: rgba(255, 255, 255, 0.88);
+            padding: 2.5rem clamp(1rem, 4vw, 2rem) 2rem;
+        }
+
+        .site-footer a {
+            color: var(--primary-pink);
+            text-decoration: none;
+        }
+
+        .site-footer a:hover {
+            color: var(--accent-orange);
+            text-decoration: underline;
+        }
+
+        .footer-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .footer-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-col p,
+        .footer-col li {
+            font-size: 0.92rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .footer-col ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-col li + li {
+            margin-top: 0.35rem;
+        }
+
+        .footer-bottom {
+            max-width: 1100px;
+            margin: 2rem auto 0;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 0.85rem;
+            text-align: center;
+            opacity: 0.75;
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --site-header-offset: 11.75rem;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .header-container {
+                grid-template-columns: 1fr auto;
+                gap: 0.9rem 1rem;
+            }
+
+            .search-container {
+                order: 3;
+                grid-column: 1 / -1;
+                justify-self: stretch;
+                max-width: none;
+            }
+
+            .nav-links {
+                justify-self: end;
+                gap: 1rem;
+            }
+
+            .nav-link {
+                font-size: 0.9rem;
+            }
+        }
+</style>

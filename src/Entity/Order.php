@@ -2,27 +2,60 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Link;
 use App\Repository\OrderRepository;
+use App\State\OrderByTransactionProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [
+        new Get(
+            uriTemplate: '/orders/by-transaction/{transactionId}',
+            uriVariables: [
+                'transactionId' => new Link(fromClass: Order::class, identifiers: ['transactionId']),
+            ],
+            security: 'true',
+            normalizationContext: ['groups' => ['order:read']],
+            provider: OrderByTransactionProvider::class,
+        ),
+    ],
+)]
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
 class Order
 {
+    /**
+     * Defines the only allowed direction of status changes (forward-only).
+     * The array order represents the progression.
+     */
+    public const STATUS_FLOW = [
+        'new_order',
+        'preparing',
+        'ready_to_ship',
+        'shipping',
+        'delivered',
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\Column(length: 100, unique: true)]
+    #[Groups(['order:read'])]
     private ?string $transactionId = null;
 
     // Customer Information
     #[ORM\Column(length: 255)]
+    #[Groups(['order:read'])]
     private ?string $customerName = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['order:read'])]
     private ?string $customerEmail = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -30,36 +63,46 @@ class Order
 
     // Order Details
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['order:read'])]
     private ?string $itemsDescription = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Groups(['order:read'])]
     private ?string $totalAmount = null;
 
     // Payment & Shipping
     #[ORM\Column(length: 50)]
+    #[Groups(['order:read'])]
     private ?string $paymentMethod = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['order:read'])]
     private ?string $shippingAddress = null;
 
     // Tracking
     #[ORM\Column(length: 50)]
+    #[Groups(['order:read'])]
     private ?string $status = 'new_order';
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['order:read'])]
     private ?string $shippingCarrier = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['order:read'])]
     private ?string $trackingNumber = null;
 
     // Timestamps
     #[ORM\Column]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $orderDate = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $completedAt = null;
 
     // Relations
@@ -178,6 +221,38 @@ class Order
         return $this->status;
     }
 
+    public static function isValidStatus(string $status): bool
+    {
+        return in_array($status, self::STATUS_FLOW, true);
+    }
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if (!self::isValidStatus($newStatus)) {
+            return false;
+        }
+
+        $current = $this->status ?? '';
+        // If existing data is in an unexpected/legacy state, allow moving into the defined flow.
+        if (!self::isValidStatus($current)) {
+            return true;
+        }
+
+        if ($current === $newStatus) {
+            return true;
+        }
+
+        $currentIndex = array_search($current, self::STATUS_FLOW, true);
+        $newIndex = array_search($newStatus, self::STATUS_FLOW, true);
+
+        if ($currentIndex === false || $newIndex === false) {
+            return false;
+        }
+
+        // Forward-only (cannot go back to past statuses).
+        return $newIndex > $currentIndex;
+    }
+
     public function setStatus(string $status): static
     {
         $this->status = $status;
@@ -267,6 +342,7 @@ class Order
         return $this;
     }
 
+    #[Groups(['order:read'])]
     public function getStatusLabel(): string
     {
         return match($this->status) {

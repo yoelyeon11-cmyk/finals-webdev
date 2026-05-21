@@ -15,76 +15,7 @@
             --light: #fdf6f6;
         }
 
-        .inventory-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            background-color: var(--light);
-            min-height: 100vh;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 3px solid var(--primary);
-        }
-
-        .header h2 {
-            color: var(--dark);
-            font-size: 2rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, var(--secondary), var(--primary));
-            color: white;
-            padding: 0.75rem 1.5rem;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(92, 58, 58, 0.15);
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(92, 58, 58, 0.25);
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-        }
-
-        .flash-message {
-            background: linear-gradient(135deg, #d4f4dd, #c8edd4);
-            color: #2d5a3d;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #4caf50;
-            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
-            font-weight: 500;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .table-wrapper {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(92, 58, 58, 0.1);
-        }
+        /* Layout uses global admin.css (same as Products tab) */
 
         .table {
             width: 100%;
@@ -274,32 +205,30 @@
 {% block body %}
     <div class="header">
         <h2>Inventory</h2>
-        <a class="btn" href="{{ path('admin_inventory_add') }}">Add Stock</a>
+        <a class="btn btn-primary" href="{{ path('admin_inventory_add') }}">Add Stock</a>
     </div>
 
     {% for message in app.flashes('success') %}
-        <div class="flash-message">
+        <div class="alert alert-success">
             {{ message }}
         </div>
     {% endfor %}
 
-    <div class="table-wrapper">
+    <div class="table-wrapper table-section">
         <table id="inventoryTable" class="table display responsive nowrap" style="width:100%">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Date Added</th>
+                    <th>Total Stock Added</th>
+                    <th>Last Added</th>
                 </tr>
             </thead>
             <tbody>
             {% for entry in entries %}
                 <tr>
-                    <td>{{ entry.id }}</td>
                     <td>{{ entry.product.name }}</td>
-                    <td data-order="{{ entry.quantity }}">{{ entry.quantity }}</td>
-                    <td data-order="{{ entry.createdAt|date('U') }}">{{ entry.createdAt|date('Y-m-d H:i') }}</td>
+                    <td data-order="{{ entry.totalQuantity }}">{{ entry.totalQuantity }}</td>
+                    <td data-order="{{ entry.lastAdded|date('U') }}">{{ entry.lastAdded|date('Y-m-d H:i') }}</td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -317,15 +246,15 @@
             $('#inventoryTable').DataTable({
                 responsive: true,
                 pageLength: 25,
-                order: [[3, 'desc']], // Sort by Date Added (newest first)
+                order: [[2, 'desc']], // Sort by Last Added (newest first)
                 columnDefs: [
                     {
                         targets: 0,
-                        width: '80px'
+                        width: '200px'
                     },
                     {
-                        targets: 2,
-                        width: '120px'
+                        targets: 1,
+                        width: '150px'
                     }
                 ],
                 language: {

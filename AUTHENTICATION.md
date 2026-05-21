@@ -106,6 +106,8 @@ User table created with migration: `Version20251210070800.php`
 4. Add email verification for new accounts
 5. Implement account lockout after failed login attempts
 
+   (i dont wanna do this tho)
+
 ## Future Enhancements
 
 Suggested improvements:
@@ -116,3 +118,4 @@ Suggested improvements:
 - Email verification for new users
 - Profile management page
 - Remember me functionality (already implemented in login form)
+

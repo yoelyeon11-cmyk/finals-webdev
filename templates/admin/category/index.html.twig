@@ -17,56 +17,7 @@
             --danger: #f44336;
         }
 
-        .categories-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            background-color: var(--light);
-            min-height: 100vh;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 3px solid var(--primary);
-        }
-
-        .header h2 {
-            color: var(--dark);
-            font-size: 2rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, var(--secondary), var(--primary));
-            color: white;
-            padding: 0.75rem 1.5rem;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(92, 58, 58, 0.15);
-            border: none;
-            cursor: pointer;
-            display: inline-block;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(92, 58, 58, 0.25);
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-        }
-
-        .table-wrapper {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(92, 58, 58, 0.1);
-        }
+        /* Layout uses global admin.css (same as Products tab) */
 
         .table {
             width: 100%;
@@ -331,10 +282,10 @@
     <div class="categories-container">
         <div class="header">
             <h2>Categories</h2>
-            <a class="btn" href="{{ path('admin_category_new') }}">New Category</a>
+            <a class="btn btn-primary" href="{{ path('admin_category_new') }}">New Category</a>
         </div>
 
-        <div class="table-wrapper">
+        <div class="table-wrapper table-section">
             <table id="categoriesTable" class="table display responsive nowrap" style="width:100%">
                 <thead>
                     <tr>

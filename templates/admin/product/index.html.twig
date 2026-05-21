@@ -2,10 +2,30 @@
 
 {% block title %}Products{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .card-body .meta {
+            display: block !important;
+        }
+        .card-body .meta span {
+            display: block;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        .card-body .meta span strong {
+            color: #df9152;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
     <div class="header">
         <h2>Products</h2>
-        <a class="btn" href="{{ path('admin_product_new') }}">New Product</a>
+        <a class="btn btn-primary" href="{{ path('admin_product_new') }}">New Product</a>
     </div>
 
     {% if products is not empty %}
@@ -22,9 +42,9 @@
                     <div class="card-body">
                         <div class="card-title">{{ product.name }}</div>
                         <div class="meta">
-                            <span>${{ product.price|number_format(2) }}</span>
-                            <span>Stock: {{ product.stock ?? 0 }}</span>
-                            <span>{{ product.category ? product.category.name : '—' }}</span>
+                            <span>Price: ${{ product.price|number_format(2) }}</span>
+                            <span>Stock: <strong>{{ product.stock ?? 0 }}</strong></span>
+                            <span>{{ product.category ? product.category.name : 'No Category' }}</span>
                         </div>
                         <div class="actions">
                             <a href="{{ path('admin_product_show', {'id': product.id}) }}" class="btn">View</a>

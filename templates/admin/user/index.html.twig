@@ -15,45 +15,7 @@
             --light: #f8f9fa;
         }
 
-        .header {
-            background: white;
-            padding: 1.5rem 2rem;
-            border-radius: 15px;
-            margin: -30px -30px 2rem -30px;
-            width: calc(100% + 60px);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header h1 {
-            color: var(--dark);
-            font-size: 1.8rem;
-            margin: 0;
-        }
-
-        .btn-add {
-            background: linear-gradient(135deg, var(--secondary), #c97642);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-add:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(223, 145, 82, 0.4);
-        }
-
-        .users-table {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
+        /* Layout uses global admin.css (same as Products tab) */
 
         table {
             width: 100%;
@@ -181,15 +143,15 @@
 
 {% block body %}
     <div class="header">
-        <h1>Users Management</h1>
-        <a href="{{ path('admin_user_new') }}" class="btn-add">+ Add New User</a>
+        <h2>Users Management</h2>
+        <a href="{{ path('admin_user_new') }}" class="btn btn-primary">+ Add New User</a>
     </div>
 
     {% for message in app.flashes('success') %}
         <div class="alert alert-success">{{ message }}</div>
     {% endfor %}
 
-    <div class="users-table">
+    <div class="users-table table-section">
         <table id="usersTable" class="display responsive nowrap" style="width:100%">
             <thead>
                 <tr>

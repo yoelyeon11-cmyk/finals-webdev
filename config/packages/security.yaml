@@ -1,3 +1,4 @@
+# config/packages/security.yaml
 security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
@@ -14,22 +15,55 @@ security:
         app_user_provider:
             entity:
                 class: App\Entity\User
-                property: username
+                property: email
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
+        api_login:
+            pattern: ^/api/login
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: /api/login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+
         main:
             lazy: true
             provider: app_user_provider
+            custom_authenticators:
+                - App\Security\GoogleAuthenticator
             form_login:
                 login_path: app_login
                 check_path: app_login
                 default_target_path: admin_dashboard
                 enable_csrf: true
+            
             logout:
                 path: app_logout
                 target: app_login
+                # --- SECURITY UPDATES START HERE ---
+                # 1. Force the server to destroy the session
+                invalidate_session: true
+                # 2. Instruct the browser to delete the session cookie
+                delete_cookies: ['PHPSESSID']
+                # 3. Modern header to wipe all client-side data (Cookies, LocalStorage, etc.)
+                clear_site_data:
+                    - cookies
+                    - storage
+                    - cache
+                # --- SECURITY UPDATES END HERE ---
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -38,20 +72,33 @@ security:
             # switch_user: true
 
     # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/verify-email, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api/contexts, roles: PUBLIC_ACCESS }
+        - { path: ^/api$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/index, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/me, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/v1/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/verify-email, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/products, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/categories, roles: PUBLIC_ACCESS }
+        - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/categories, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/orders/by-transaction, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/connect/google, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        # This ensures that any page starting with /admin requires a valid session with ROLE_STAFF
         - { path: ^/admin, roles: ROLE_STAFF }
 
 when@test:
     security:
         password_hashers:
-            # By default, password hashers are resource intensive and take time. This is
-            # important to generate secure password hashes. In tests however, secure hashes
-            # are not important, waste resources and increase test times. The following
-            # reduces the work factor to the lowest possible values.
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
                 algorithm: auto
-                cost: 4 # Lowest possible value for bcrypt
-                time_cost: 3 # Lowest possible value for argon
-                memory_cost: 10 # Lowest possible value for argon
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

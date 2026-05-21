@@ -1,0 +1,285 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}About us | Cloudrobe{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% include 'partials/_public_theme_styles.html.twig' %}
+    <style>
+        .about-main {
+            background: var(--light-bg);
+        }
+
+        .about-hero {
+            padding: clamp(2.5rem, 8vw, 4rem) clamp(1rem, 4vw, 2rem);
+            background: linear-gradient(135deg, var(--primary-pink) 0%, var(--secondary-pink) 55%, var(--accent-orange) 100%);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.2) 0%, transparent 45%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.12) 0%, transparent 40%);
+            pointer-events: none;
+        }
+
+        .about-hero-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 40rem;
+            margin: 0 auto;
+        }
+
+        .about-hero h1 {
+            font-size: clamp(1.85rem, 5vw, 2.75rem);
+            font-weight: 800;
+            color: var(--white);
+            margin: 0 0 0.75rem;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .about-hero .lead {
+            font-size: clamp(1rem, 2.8vw, 1.2rem);
+            line-height: 1.65;
+            color: rgba(255, 255, 255, 0.96);
+            margin: 0;
+        }
+
+        .about-section {
+            max-width: 52rem;
+            margin: 0 auto;
+            padding: clamp(2.5rem, 7vw, 4rem) clamp(1rem, 4vw, 2rem);
+        }
+
+        .about-section h2 {
+            font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+            color: var(--dark-text);
+            margin: 0 0 1rem;
+            text-align: center;
+        }
+
+        .about-section p {
+            margin: 0 0 1rem;
+            line-height: 1.7;
+            font-size: clamp(0.95rem, 2.4vw, 1.05rem);
+        }
+
+        .about-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+            gap: 1.25rem;
+            margin-top: 1.5rem;
+        }
+
+        .value-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-soft);
+            text-align: center;
+        }
+
+        .value-card h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1rem;
+            color: var(--accent-orange);
+        }
+
+        .value-card p {
+            margin: 0;
+            font-size: 0.92rem;
+            text-align: center;
+        }
+
+        .team-section {
+            padding: 0 clamp(1rem, 4vw, 2rem) clamp(3rem, 8vw, 4.5rem);
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .team-section h2 {
+            text-align: center;
+            font-size: clamp(1.5rem, 4vw, 2.25rem);
+            margin: 0 0 0.5rem;
+            background: linear-gradient(45deg, var(--accent-orange), var(--secondary-pink));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .team-intro {
+            text-align: center;
+            max-width: 36rem;
+            margin: 0 auto 2rem;
+            line-height: 1.65;
+            font-size: clamp(0.92rem, 2.4vw, 1.05rem);
+            color: var(--dark-text);
+            opacity: 0.92;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+            gap: clamp(1.25rem, 3vw, 1.75rem);
+        }
+
+        .team-card {
+            background: var(--white);
+            border-radius: 18px;
+            padding: 1.75rem 1.5rem;
+            border: 1px solid var(--border-soft);
+            box-shadow: 0 8px 28px rgba(92, 58, 58, 0.08);
+            text-align: center;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 36px rgba(223, 145, 82, 0.15);
+        }
+
+        .team-avatar,
+        .team-avatar-image {
+            width: 4.5rem;
+            height: 4.5rem;
+            margin: 0 auto 1.1rem;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .team-avatar {
+            background: linear-gradient(135deg, var(--secondary-pink), var(--accent-orange));
+            color: var(--white);
+            font-weight: 800;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.02em;
+        }
+
+        .team-avatar-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .team-card h3 {
+            font-size: clamp(1.05rem, 2.5vw, 1.2rem);
+            margin: 0 0 0.35rem;
+            color: var(--dark-text);
+        }
+
+        .team-role {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 0 0 0.75rem;
+            line-height: 1.4;
+        }
+
+        .team-card p {
+            margin: 0;
+            font-size: clamp(0.88rem, 2.2vw, 0.95rem);
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .about-cta {
+            text-align: center;
+            padding: 0 1rem 3rem;
+        }
+
+        .about-cta a {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--secondary-pink), var(--accent-orange));
+            color: var(--white);
+            padding: 0.85rem 1.75rem;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .about-cta a:hover {
+            color: var(--white);
+            box-shadow: 0 8px 24px rgba(223, 145, 82, 0.35);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="public-site">
+    {% include 'partials/public_header.html.twig' %}
+
+    <main class="about-main">
+        <section class="about-hero" aria-labelledby="about-heading">
+            <div class="about-hero-inner">
+                <h1 id="about-heading">About Cloudrobe</h1>
+                <p class="lead">We are a small team obsessed with color accuracy, wearable comfort, and the moment your cosplay finally feels <em>right</em>.</p>
+            </div>
+        </section>
+
+        <section class="about-section" aria-labelledby="story-heading">
+            <h2 id="story-heading">Our story</h2>
+            <p>Cloudrobe started at the con table—frustrated by costumes that looked fine online but fell flat under hall lighting. We built workflows around dye lots, fabric drape, and honest delivery dates.</p>
+            <p>Today we ship ready-to-wear lines and custom commissions with the same rule: if it is not something we would wear on the floor ourselves, it does not leave the studio.</p>
+        </section>
+
+        <section class="about-section" aria-labelledby="values-heading">
+            <h2 id="values-heading">What we stand for</h2>
+            <div class="values-grid">
+                <article class="value-card">
+                    <h3>Color truth</h3>
+                    <p>Panels and trims matched to reference—not “close enough” swatches.</p>
+                </article>
+                <article class="value-card">
+                    <h3>Wearability</h3>
+                    <p>Comfort and movement matter when you are on the floor for twelve hours.</p>
+                </article>
+                <article class="value-card">
+                    <h3>Honest timelines</h3>
+                    <p>We would rather adjust a date than surprise you the week before a con.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="team-section" id="team" aria-labelledby="team-heading">
+            <h2 id="team-heading">Meet the team</h2>
+            <p class="team-intro">Names, roles, and the people behind your patterns, parcels, and panic-free sizing questions.</p>
+
+            <div class="team-grid">
+                {% for member in team %}
+                    <article class="team-card">
+                        {% if member.image is defined and member.image %}
+                            <div class="team-avatar-image">
+                                <img src="{{ asset(member.image) }}" alt="{{ member.name }}" loading="lazy">
+                            </div>
+                        {% else %}
+                            <div class="team-avatar" aria-hidden="true">{{ member.initials }}</div>
+                        {% endif %}
+                        <h3>{{ member.name }}</h3>
+                        <p class="team-role">{{ member.position }}</p>
+                        <p>{{ member.bio }}</p>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="about-cta">
+            <a href="{{ path('app_contact') }}">Questions? Contact us</a>
+        </div>
+    </main>
+
+    {% include 'partials/public_footer.html.twig' %}
+    {% include 'partials/public_search_script.html.twig' %}
+</div>
+{% endblock %}

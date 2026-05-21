@@ -43,6 +43,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $bio = null;
 
+    #[ORM\Column(length: 255, nullable: true, unique: true)]
+    private ?string $googleId = null;
+
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isVerified = false;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $emailVerificationToken = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $emailVerificationTokenExpiresAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -91,7 +103,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->username;
+        return (string) $this->email;
     }
 
     /**
@@ -168,5 +180,70 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->bio = $bio;
         return $this;
+    }
+
+    public function getGoogleId(): ?string
+    {
+        return $this->googleId;
+    }
+
+    public function setGoogleId(?string $googleId): static
+    {
+        $this->googleId = $googleId;
+
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $isVerified): static
+    {
+        $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    public function getEmailVerificationToken(): ?string
+    {
+        return $this->emailVerificationToken;
+    }
+
+    public function setEmailVerificationToken(?string $emailVerificationToken): static
+    {
+        $this->emailVerificationToken = $emailVerificationToken;
+        return $this;
+    }
+
+    public function getEmailVerificationTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->emailVerificationTokenExpiresAt;
+    }
+
+    public function setEmailVerificationTokenExpiresAt(?\DateTimeImmutable $expiresAt): static
+    {
+        $this->emailVerificationTokenExpiresAt = $expiresAt;
+        return $this;
+    }
+
+    public function isEmailVerificationTokenValid(string $token, ?\DateTimeImmutable $now = null): bool
+    {
+        $now ??= new \DateTimeImmutable();
+
+        if ($this->isVerified) {
+            return false;
+        }
+
+        if ($this->emailVerificationToken === null || $this->emailVerificationTokenExpiresAt === null) {
+            return false;
+        }
+
+        if (!hash_equals($this->emailVerificationToken, $token)) {
+            return false;
+        }
+
+        return $now <= $this->emailVerificationTokenExpiresAt;
     }
 }

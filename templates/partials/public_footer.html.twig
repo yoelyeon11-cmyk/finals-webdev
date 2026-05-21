@@ -1,0 +1,24 @@
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div class="footer-col">
+            <p class="footer-brand">Cloudrobe</p>
+            <p>Cosplay in full color—thoughtful materials, honest timelines, and support that shows up.</p>
+        </div>
+        <div class="footer-col">
+            <p class="footer-brand">Explore</p>
+            <ul>
+                <li><a href="{{ path('app_home_page') }}#collections">Collections</a></li>
+                <li><a href="{{ path('app_home_page') }}#features">Why Cloudrobe</a></li>
+                <li><a href="{{ path('app_home_page') }}#how-it-works">How it works</a></li>
+                <li><a href="{{ path('app_about') }}">About us</a></li>
+                <li><a href="{{ path('app_contact') }}">Contact</a></li>
+                <li><a href="{{ path('app_home_page') }}#custom">Custom orders</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <p class="footer-brand">Visit</p>
+            <p>Questions? Reach us through your order or the contact channel you used at checkout—we read every message.</p>
+        </div>
+    </div>
+    <p class="footer-bottom">&copy; {{ 'now'|date('Y') }} Cloudrobe. All rights reserved.</p>
+</footer>

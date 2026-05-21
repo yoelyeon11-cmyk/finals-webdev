@@ -53,11 +53,18 @@
 
         <div class="form-group">
             <label for="status">Order Status</label>
+            {% set statusFlow = ['new_order', 'preparing', 'ready_to_ship', 'shipping', 'delivered'] %}
+            {% set currentIndex = -1 %}
+            {% for s in statusFlow %}
+                {% if s == order.status %}
+                    {% set currentIndex = loop.index0 %}
+                {% endif %}
+            {% endfor %}
             <select class="form-control" id="status" name="order[status]">
-                <option value="new_order" {{ order.status == 'new_order' ? 'selected' : '' }}>New Order</option>
-                <option value="preparing" {{ order.status == 'preparing' ? 'selected' : '' }}>Preparing Order</option>
-                <option value="ready_to_ship" {{ order.status == 'ready_to_ship' ? 'selected' : '' }}>Ready to Ship</option>
-                <option value="shipping" {{ order.status == 'shipping' ? 'selected' : '' }}>Shipping</option>
+                <option value="new_order" {{ order.status == 'new_order' ? 'selected' : '' }} {{ currentIndex > 0 ? 'disabled' : '' }}>New Order</option>
+                <option value="preparing" {{ order.status == 'preparing' ? 'selected' : '' }} {{ currentIndex > 1 ? 'disabled' : '' }}>Preparing Order</option>
+                <option value="ready_to_ship" {{ order.status == 'ready_to_ship' ? 'selected' : '' }} {{ currentIndex > 2 ? 'disabled' : '' }}>Ready to Ship</option>
+                <option value="shipping" {{ order.status == 'shipping' ? 'selected' : '' }} {{ currentIndex > 3 ? 'disabled' : '' }}>Shipping</option>
                 <option value="delivered" {{ order.status == 'delivered' ? 'selected' : '' }}>Delivered/Completed</option>
             </select>
         </div>

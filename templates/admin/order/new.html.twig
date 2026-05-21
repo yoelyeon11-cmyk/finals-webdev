@@ -4,7 +4,7 @@
 
 {% block body %}
 <div class="header">
-    <h2>📦 {{ customRequest is defined ? 'Create Order from Custom Request #' ~ customRequest.id : 'New Order' }}</h2>
+    <h2> {{ customRequest is defined ? 'Create Order from Custom Request #' ~ customRequest.id : 'New Order' }}</h2>
     <a href="{{ path('admin_order_index') }}" class="btn btn-secondary">← Back to Orders</a>
 </div>
 

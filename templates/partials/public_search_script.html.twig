@@ -1,0 +1,26 @@
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.querySelector(".search-input");
+    const searchButton = document.querySelector(".search-button");
+    if (!searchInput || !searchButton) return;
+
+    const searchBase = {{ path('app_home_page')|json_encode|raw }};
+
+    searchInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const q = this.value.trim();
+            if (q.length > 0) {
+                window.location.href = searchBase + "?q=" + encodeURIComponent(q);
+            }
+        }
+    });
+
+    searchButton.addEventListener("click", function() {
+        const q = searchInput.value.trim();
+        if (q.length > 0) {
+            window.location.href = searchBase + "?q=" + encodeURIComponent(q);
+        }
+    });
+});
+</script>

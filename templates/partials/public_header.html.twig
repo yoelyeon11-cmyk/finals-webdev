@@ -1,0 +1,27 @@
+<header class="header">
+    <div class="header-container">
+        <a href="{{ path('app_home_page') }}" class="logo">
+            <img src="{{ asset('images/logo.png') }}" alt="Cloudrobe">
+        </a>
+
+        <div class="search-container">
+            <input
+                type="text"
+                class="search-input"
+                placeholder="Search costumes..."
+                aria-label="Search costumes"
+            >
+            <button type="button" class="search-button" aria-label="Search">⌕</button>
+        </div>
+
+        <nav class="nav-links" aria-label="Main">
+            <a href="{{ path('app_home_page') }}" class="nav-link">Home</a>
+            <a href="{{ path('app_home_page') }}#collections" class="nav-link">Collections</a>
+            <a href="{{ path('app_home_page') }}#features" class="nav-link">Why us</a>
+            <a href="{{ path('app_about') }}" class="nav-link">About</a>
+            <a href="{{ path('app_home_page') }}#custom" class="nav-link">Custom</a>
+            <a href="{{ path('app_contact') }}" class="nav-link">Contact</a>
+            <a href="{{ path('app_login') }}" class="auth-btn auth-btn-login">Log in</a>
+        </nav>
+    </div>
+</header>

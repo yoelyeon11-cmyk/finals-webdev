@@ -2,36 +2,53 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\ProductsRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Category;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(security: 'true'),
+        new Get(security: 'true'),
+    ],
+    normalizationContext: ['groups' => ['product:read']],
+)]
 #[ORM\Entity(repositoryClass: ProductsRepository::class)]
 class Products
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['product:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['product:read'])]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['product:read'])]
     private ?string $description = null;
 
     #[ORM\Column]
+    #[Groups(['product:read'])]
     private ?float $price = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['product:read'])]
     private ?string $image = null;
 
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: true, onDelete: "SET NULL")]
+    #[Groups(['product:read'])]
     private ?Category $category = null;
 
     #[ORM\Column(type: Types::INTEGER, options: ["default" => 0])]
+    #[Groups(['product:read'])]
     private ?int $stock = 0;
 
     public function __construct()

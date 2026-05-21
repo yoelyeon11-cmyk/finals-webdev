@@ -175,6 +175,11 @@ class OrderController extends AbstractController
     #[Route('/{id}/edit', name: 'admin_order_edit')]
     public function edit(Request $request, Order $order, EntityManagerInterface $em): Response
     {
+        if ($order->getStatus() !== 'new_order') {
+            $this->addFlash('error', 'This order can no longer be edited because it is already in progress.');
+            return $this->redirectToRoute('admin_order_show', ['id' => $order->getId()]);
+        }
+
         $form = $this->createForm(OrderType::class, $order);
         $form->handleRequest($request);
 
@@ -204,9 +209,22 @@ class OrderController extends AbstractController
 
         $orderData = $request->request->all('order');
         $oldStatus = $order->getStatus();
+
+        // Once delivered, the order is locked.
+        if ($oldStatus === 'delivered') {
+            $this->addFlash('error', 'Delivered orders are locked and cannot be updated.');
+            return $this->redirectToRoute('admin_order_show', ['id' => $order->getId()]);
+        }
         
         if (isset($orderData['status'])) {
-            $order->setStatus($orderData['status']);
+            $newStatus = (string) $orderData['status'];
+
+            if (!$order->canTransitionTo($newStatus)) {
+                $this->addFlash('error', 'Invalid status change. You can only move the status forward until it reaches Delivered.');
+                return $this->redirectToRoute('admin_order_show', ['id' => $order->getId()]);
+            }
+
+            $order->setStatus($newStatus);
         }
         
         if (isset($orderData['shippingCarrier'])) {

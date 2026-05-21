@@ -31,7 +31,9 @@ class CustomCosplayRequestController extends AbstractController
     public function new(Request $request, EntityManagerInterface $em, ActivityLogger $logger): Response
     {
         $customRequest = new CustomCosplayRequest();
-        $form = $this->createForm(CustomCosplayRequestType::class, $customRequest);
+        $form = $this->createForm(CustomCosplayRequestType::class, $customRequest, [
+            'include_status' => false,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
