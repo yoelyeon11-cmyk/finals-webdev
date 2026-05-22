@@ -4,6 +4,12 @@
             <img src="{{ asset('images/logo.png') }}" alt="Cloudrobe">
         </a>
 
+        <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Open menu">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+
         <div class="search-container">
             <input
                 type="text"
@@ -14,14 +20,41 @@
             <button type="button" class="search-button" aria-label="Search">⌕</button>
         </div>
 
-        <nav class="nav-links" aria-label="Main">
+        <nav class="nav-links" id="main-nav" aria-label="Main">
             <a href="{{ path('app_home_page') }}" class="nav-link">Home</a>
             <a href="{{ path('app_home_page') }}#collections" class="nav-link">Collections</a>
             <a href="{{ path('app_home_page') }}#features" class="nav-link">Why us</a>
             <a href="{{ path('app_about') }}" class="nav-link">About</a>
             <a href="{{ path('app_home_page') }}#custom" class="nav-link">Custom</a>
             <a href="{{ path('app_contact') }}" class="nav-link">Contact</a>
-            <a href="{{ path('app_login') }}" class="auth-btn auth-btn-login">Log in</a>
+            {% if app.user %}
+                {% if is_granted('ROLE_STAFF') %}
+                    <a href="{{ path('admin_dashboard') }}" class="auth-btn auth-btn-signup">Dashboard</a>
+                {% else %}
+                    <a href="{{ path('app_home_page') }}" class="auth-btn auth-btn-login">My account</a>
+                {% endif %}
+                <a href="{{ path('app_logout') }}" class="auth-btn auth-btn-login">Log out</a>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="auth-btn auth-btn-login">Log in</a>
+            {% endif %}
         </nav>
     </div>
 </header>
+<script>
+(function () {
+    var btn = document.querySelector('.nav-toggle');
+    var nav = document.getElementById('main-nav');
+    if (!btn || !nav) return;
+    btn.addEventListener('click', function () {
+        var open = nav.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    });
+    nav.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+            nav.classList.remove('is-open');
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    });
+})();
+</script>

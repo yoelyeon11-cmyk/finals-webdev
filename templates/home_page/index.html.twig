@@ -374,6 +374,25 @@
             line-height: 1.6;
         }
 
+        .landing-inner {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 1024px) {
+            .features-grid,
+            .steps-grid,
+            .collections-grid,
+            .testimonials-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
             .cta-buttons,
             .cta-final-links {
@@ -383,6 +402,19 @@
 
             .cta-button {
                 text-align: center;
+            }
+
+            .hero-section {
+                min-height: auto;
+                padding-top: 3rem;
+                padding-bottom: 3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .landing-section {
+                padding-left: 1rem;
+                padding-right: 1rem;
             }
         }
     </style>
@@ -542,9 +574,9 @@
                 <div class="collections-grid">
                     {% for product in products %}
                         <article class="collection-card">
-                            <a href="{{ path('admin_product_show', { id: product.id }) }}" style="text-decoration: none; color: inherit;">
+                            <a href="{{ path('app_product_show', { id: product.id }) }}" style="text-decoration: none; color: inherit;">
                                 <div class="collection-image">
-                                    <img src="/uploads/{{ product.image }}" alt="{{ product.name }}" loading="lazy">
+                                    <img src="{{ product.image starts with '/' ? product.image : '/uploads/' ~ product.image }}" alt="{{ product.name }}" loading="lazy">
                                 </div>
                                 <div class="collection-info">
                                     <h3>{{ product.name }}</h3>

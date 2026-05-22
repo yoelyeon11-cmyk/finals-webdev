@@ -47,7 +47,7 @@ security:
             form_login:
                 login_path: app_login
                 check_path: app_login
-                default_target_path: admin_dashboard
+                success_handler: App\Security\LoginSuccessHandler
                 enable_csrf: true
             
             logout:
@@ -90,6 +90,10 @@ security:
         - { path: ^/api/categories, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/orders/by-transaction, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/connect/google, roles: PUBLIC_ACCESS }
+        - { path: ^/home/page, roles: PUBLIC_ACCESS }
+        - { path: ^/products/, roles: PUBLIC_ACCESS }
+        - { path: ^/about, roles: PUBLIC_ACCESS }
+        - { path: ^/contact, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         # This ensures that any page starting with /admin requires a valid session with ROLE_STAFF
         - { path: ^/admin, roles: ROLE_STAFF }

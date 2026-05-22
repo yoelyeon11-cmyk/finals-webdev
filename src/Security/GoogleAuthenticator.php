@@ -84,7 +84,15 @@ final class GoogleAuthenticator extends OAuth2Authenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        return new RedirectResponse($this->urlGenerator->generate('admin_dashboard'));
+        $user = $token->getUser();
+        if ($user instanceof User) {
+            $roles = $user->getRoles();
+            if (\in_array('ROLE_STAFF', $roles, true) || \in_array('ROLE_ADMIN', $roles, true)) {
+                return new RedirectResponse($this->urlGenerator->generate('admin_dashboard'));
+            }
+        }
+
+        return new RedirectResponse($this->urlGenerator->generate('app_home_page'));
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response

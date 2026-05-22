@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
+use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -13,9 +14,8 @@ class SecurityController extends AbstractController
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        // if user is already logged in, redirect to dashboard
         if ($this->getUser()) {
-            return $this->redirectToRoute('admin_dashboard');
+            return $this->redirectAfterLogin();
         }
 
         // get the login error if there is one
@@ -57,5 +57,18 @@ class SecurityController extends AbstractController
     public function connectGoogleCheck(): never
     {
         throw new \LogicException('This code should never be reached.');
+    }
+
+    private function redirectAfterLogin(): Response
+    {
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $roles = $user->getRoles();
+            if (\in_array('ROLE_STAFF', $roles, true) || \in_array('ROLE_ADMIN', $roles, true)) {
+                return $this->redirectToRoute('admin_dashboard');
+            }
+        }
+
+        return $this->redirectToRoute('app_home_page');
     }
 }

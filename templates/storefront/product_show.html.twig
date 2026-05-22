@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }} | Cloudrobe{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% include 'partials/_public_theme_styles.html.twig' %}
+    <style>
+        .product-page { max-width: 1100px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem); }
+        .product-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(1.5rem, 4vw, 3rem);
+            align-items: start;
+        }
+        .product-image {
+            width: 100%;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid var(--border-soft);
+            overflow: hidden;
+        }
+        .product-image img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .product-info h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); color: var(--dark-text); margin: 0 0 0.5rem; }
+        .product-price { font-size: clamp(1.25rem, 3vw, 1.75rem); color: var(--accent-orange); font-weight: 800; margin: 0 0 1rem; }
+        .product-desc { line-height: 1.65; color: #6b4747; margin-bottom: 1.5rem; }
+        .back-link { color: var(--accent-orange); font-weight: 600; text-decoration: none; }
+        @media (max-width: 768px) {
+            .product-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="public-site">
+    {% include 'partials/public_header.html.twig' %}
+    <main class="product-page">
+        <p><a class="back-link" href="{{ path('app_home_page') }}">← Back to home</a></p>
+        <div class="product-layout">
+            <div class="product-image">
+                {% if product.image %}
+                    <img src="{{ product.image starts with '/' ? product.image : '/uploads/' ~ product.image }}" alt="{{ product.name }}">
+                {% endif %}
+            </div>
+            <div class="product-info">
+                <h1>{{ product.name }}</h1>
+                <p class="product-price">₱{{ product.price }}</p>
+                {% if product.description %}
+                    <p class="product-desc">{{ product.description }}</p>
+                {% endif %}
+                <p class="product-desc">Order via the Cloudrobe mobile app or contact us for availability.</p>
+                <a href="{{ path('app_contact') }}" class="auth-btn auth-btn-signup" style="display:inline-block;">Contact us</a>
+            </div>
+        </div>
+    </main>
+    {% include 'partials/public_footer.html.twig' %}
+</div>
+{% endblock %}
