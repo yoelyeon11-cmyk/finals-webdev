@@ -385,7 +385,7 @@
                         </div>
                         <div class="preview-area">
                             {% if product.image %}
-                                <img src="{{ product.image }}" class="image-preview" id="imagePreview">
+                                <img src="{{ product_image_url(product.image) }}" class="image-preview" id="imagePreview">
                             {% else %}
                                 <div class="image-placeholder" id="imagePlaceholder">🎭</div>
                             {% endif %}

@@ -34,7 +34,7 @@
                 <div class="card-item">
                     <div class="card-thumb">
                         {% if product.image %}
-                            <img src="{{ product.image }}" alt="{{ product.name }}">
+                            <img src="{{ product_image_url(product.image) }}" alt="{{ product.name }}">
                         {% else %}
                             <div class="placeholder">📦</div>
                         {% endif %}

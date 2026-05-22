@@ -59,7 +59,7 @@
 
                 <div class="image-preview-container">
                     {% if product.image %}
-                        <img src="{{ product.image }}" class="image-preview">
+                        <img src="{{ product_image_url(product.image) }}" class="image-preview">
                     {% else %}
                         <div class="image-placeholder">🎭</div>
                     {% endif %}

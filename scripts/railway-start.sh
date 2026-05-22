@@ -40,6 +40,9 @@ fi
 echo "[railway] Running migrations..."
 php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 
+echo "[railway] Repairing product images if upload files are missing..."
+php bin/console app:fix-product-images --no-interaction 2>/dev/null || true
+
 echo "[railway] Warming cache..."
 php bin/console cache:clear --env=prod --no-warmup
 php bin/console cache:warmup --env=prod
