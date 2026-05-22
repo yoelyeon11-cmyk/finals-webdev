@@ -77,6 +77,25 @@ class UserFixtures extends Fixture
         
         $manager->persist($staffMember);
 
+        // Customer accounts (mobile app / storefront testing)
+        $customer = new User();
+        $customer->setUsername('customer');
+        $customer->setEmail('customer@cloudrobe.com');
+        $customer->setFullName('Test Customer');
+        $customer->setRoles(['ROLE_USER']);
+        $customer->setIsVerified(true);
+        $customer->setPassword($this->passwordHasher->hashPassword($customer, 'customer123'));
+        $manager->persist($customer);
+
+        $customer2 = new User();
+        $customer2->setUsername('demo_customer');
+        $customer2->setEmail('demo@cloudrobe.com');
+        $customer2->setFullName('Demo Customer');
+        $customer2->setRoles(['ROLE_USER']);
+        $customer2->setIsVerified(true);
+        $customer2->setPassword($this->passwordHasher->hashPassword($customer2, 'demo123'));
+        $manager->persist($customer2);
+
         $manager->flush();
     }
 }

@@ -892,4 +892,74 @@ ul.form-error {
         font-size: 12px;
         padding: 8px;
     }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    :root {
+        --sidebar-width: 100%;
+    }
+
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        min-height: unset;
+    }
+
+    .sidebar-nav ul {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .sidebar-nav li {
+        width: auto;
+        flex: 1 1 calc(50% - 4px);
+        min-width: 140px;
+    }
+
+    .nav-item {
+        max-height: none;
+        min-height: 36px;
+        font-size: 11px;
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        max-width: 100%;
+        padding: 12px;
+    }
+
+    .main-content table {
+        font-size: 12px;
+    }
+
+    .btn,
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
 }
