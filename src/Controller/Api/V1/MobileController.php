@@ -4,6 +4,8 @@ namespace App\Controller\Api\V1;
 
 use App\Entity\Products;
 use App\Repository\ProductsRepository;
+use App\Service\ProductImageUrlResolver;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,6 +14,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/v1')]
 final class MobileController extends AbstractController
 {
+    public function __construct(
+        private readonly ProductImageUrlResolver $imageUrlResolver,
+    ) {
+    }
     #[Route('/products', name: 'api_v1_products_index', methods: ['GET'])]
     public function products(Request $request, ProductsRepository $productsRepository): JsonResponse
     {
@@ -25,7 +31,7 @@ final class MobileController extends AbstractController
     }
 
     #[Route('/products/{id}', name: 'api_v1_products_show', methods: ['GET'])]
-    public function product(Products $product, Request $request): JsonResponse
+    public function product(#[MapEntity] Products $product, Request $request): JsonResponse
     {
         return $this->json([
             'success' => true,
@@ -37,10 +43,7 @@ final class MobileController extends AbstractController
     /** @return array<string, mixed> */
     private function serializeProduct(Products $product, Request $request): array
     {
-        $image = $product->getImage();
-        if ($image && !str_starts_with($image, 'http')) {
-            $image = $request->getSchemeAndHttpHost() . '/' . ltrim($image, '/');
-        }
+        $image = $this->imageUrlResolver->resolve($product->getImage(), $request);
 
         return [
             'id' => $product->getId(),

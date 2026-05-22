@@ -576,7 +576,12 @@
                         <article class="collection-card">
                             <a href="{{ path('app_product_show', { id: product.id }) }}" style="text-decoration: none; color: inherit;">
                                 <div class="collection-image">
-                                    <img src="{{ product.image starts with '/' ? product.image : '/uploads/' ~ product.image }}" alt="{{ product.name }}" loading="lazy">
+                                    {% set imgUrl = product_image_url(product.image) %}
+                                    {% if imgUrl %}
+                                        <img src="{{ imgUrl }}" alt="{{ product.name }}" loading="lazy">
+                                    {% else %}
+                                        <span style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">No image</span>
+                                    {% endif %}
                                 </div>
                                 <div class="collection-info">
                                     <h3>{{ product.name }}</h3>

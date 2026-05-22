@@ -15,15 +15,21 @@
         }
         .product-image {
             width: 100%;
+            min-height: 220px;
             border-radius: 16px;
             background: rgba(255,255,255,0.9);
             border: 1px solid var(--border-soft);
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .product-image img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .product-image .no-image { color: #999; font-weight: 600; padding: 2rem; }
         .product-info h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); color: var(--dark-text); margin: 0 0 0.5rem; }
         .product-price { font-size: clamp(1.25rem, 3vw, 1.75rem); color: var(--accent-orange); font-weight: 800; margin: 0 0 1rem; }
         .product-desc { line-height: 1.65; color: #6b4747; margin-bottom: 1.5rem; }
+        .product-stock { font-size: 0.95rem; margin-bottom: 1rem; color: var(--dark-text); }
         .back-link { color: var(--accent-orange); font-weight: 600; text-decoration: none; }
         @media (max-width: 768px) {
             .product-layout { grid-template-columns: 1fr; }
@@ -38,17 +44,20 @@
         <p><a class="back-link" href="{{ path('app_home_page') }}">← Back to home</a></p>
         <div class="product-layout">
             <div class="product-image">
-                {% if product.image %}
-                    <img src="{{ product.image starts with '/' ? product.image : '/uploads/' ~ product.image }}" alt="{{ product.name }}">
+                {% if imageUrl %}
+                    <img src="{{ imageUrl }}" alt="{{ product.name }}">
+                {% else %}
+                    <span class="no-image">No image available</span>
                 {% endif %}
             </div>
             <div class="product-info">
                 <h1>{{ product.name }}</h1>
-                <p class="product-price">₱{{ product.price }}</p>
+                <p class="product-price">₱{{ product.price|number_format(2, '.', ',') }}</p>
+                <p class="product-stock">In stock: {{ product.stock ?? 0 }}</p>
                 {% if product.description %}
                     <p class="product-desc">{{ product.description }}</p>
                 {% endif %}
-                <p class="product-desc">Order via the Cloudrobe mobile app or contact us for availability.</p>
+                <p class="product-desc">Use the Cloudrobe mobile app to add this item to your cart and place an order.</p>
                 <a href="{{ path('app_contact') }}" class="auth-btn auth-btn-signup" style="display:inline-block;">Contact us</a>
             </div>
         </div>
