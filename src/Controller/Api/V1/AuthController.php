@@ -236,20 +236,41 @@ final class AuthController extends AbstractController
         $user->setFullName($fullName);
         $user->setRoles(['ROLE_USER']);
         $user->setPassword($hasher->hashPassword($user, $plainPassword));
+        // Mobile API: allow sign-in immediately (no dependency on mailer / verify link).
+        $user->setIsVerified(true);
+        $user->setEmailVerificationToken(null);
+        $user->setEmailVerificationTokenExpiresAt(null);
 
-        $emailVerification->issueToken($user);
-        $em->persist($user);
-        $em->flush();
-
-        $emailSent = true;
         try {
-            $emailVerification->sendVerificationEmail($user);
+            $em->persist($user);
+            $em->flush();
         } catch (\Throwable $e) {
-            $emailSent = false;
-            $logger->error('API registration: verification email failed', [
+            $logger->error('API registration: could not save user', [
+                'exception' => $e,
+                'email' => $email,
+                'username' => $username,
+            ]);
+
+            return $this->json([
+                'success' => false,
+                'data' => null,
+                'error' => [
+                    'code' => 'registration_failed',
+                    'message' => 'Could not create account. The server database may need migrations. Try Google Sign-In or contact support.',
+                ],
+            ], 500);
+        }
+
+        $emailSent = false;
+        try {
+            $emailVerification->issueToken($user);
+            $emailVerification->sendVerificationEmail($user);
+            $emailSent = true;
+            $em->flush();
+        } catch (\Throwable $e) {
+            $logger->warning('API registration: verification email skipped', [
                 'exception' => $e,
                 'userId' => $user->getId(),
-                'email' => $user->getEmail(),
             ]);
         }
 
@@ -260,9 +281,7 @@ final class AuthController extends AbstractController
                 'username' => $user->getUsername(),
                 'verified' => $user->isVerified(),
                 'emailSent' => $emailSent,
-                'message' => $emailSent
-                    ? 'Account created. Please verify your email.'
-                    : 'Account created. We could not send the verification email. You can still sign in if an admin verifies your account.',
+                'message' => 'Account created. You can sign in now.',
             ],
             'error' => null,
         ], 201);
