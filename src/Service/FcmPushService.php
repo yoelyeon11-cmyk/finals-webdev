@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -18,15 +17,26 @@ final class FcmPushService
 {
     private ?HttpClientInterface $httpClient = null;
 
+    private readonly string $serviceAccountJson;
+
+    private readonly string $legacyServerKey;
+
+    private readonly string $projectId;
+
     public function __construct(
         private readonly LoggerInterface $logger,
-        #[Autowire('%env(default::FIREBASE_SERVICE_ACCOUNT_JSON)%')]
-        private readonly string $serviceAccountJson = '',
-        #[Autowire('%env(default::FCM_LEGACY_SERVER_KEY)%')]
-        private readonly string $legacyServerKey = '',
-        #[Autowire('%env(default:cloudrobe-bd8af:FIREBASE_PROJECT_ID)%')]
-        private readonly string $projectId = 'cloudrobe-bd8af',
     ) {
+        // Read via getenv so JSON with "%" (e.g. %40 in URLs) is not mangled by Symfony parameter expansion.
+        $this->serviceAccountJson = self::readEnv('FIREBASE_SERVICE_ACCOUNT_JSON');
+        $this->legacyServerKey = self::readEnv('FCM_LEGACY_SERVER_KEY');
+        $this->projectId = self::readEnv('FIREBASE_PROJECT_ID') ?: 'cloudrobe-bd8af';
+    }
+
+    private static function readEnv(string $key): string
+    {
+        $value = $_ENV[$key] ?? getenv($key);
+
+        return is_string($value) ? $value : '';
     }
 
     public function isConfigured(): bool

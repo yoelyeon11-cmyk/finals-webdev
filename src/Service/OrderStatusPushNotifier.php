@@ -54,11 +54,19 @@ final class OrderStatusPushNotifier
             $body .= sprintf(' (Tracking: %s)', $order->getTrackingNumber());
         }
 
-        $this->fcm->sendToDevice($token, $title, $body, [
-            'type' => 'order_status',
-            'transactionId' => (string) $order->getTransactionId(),
-            'status' => $newStatus,
-            'statusLabel' => $order->getStatusLabel(),
-        ]);
+        try {
+            $this->fcm->sendToDevice($token, $title, $body, [
+                'type' => 'order_status',
+                'transactionId' => (string) $order->getTransactionId(),
+                'status' => $newStatus,
+                'statusLabel' => $order->getStatusLabel(),
+            ]);
+        } catch (\Throwable $e) {
+            $this->logger->error('Order status push failed', [
+                'exception' => $e,
+                'orderId' => $order->getId(),
+                'transactionId' => $order->getTransactionId(),
+            ]);
+        }
     }
 }

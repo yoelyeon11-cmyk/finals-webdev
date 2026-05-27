@@ -188,6 +188,7 @@ final class AuthController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher,
         EmailVerificationService $emailVerification,
+        LoggerInterface $logger,
     ): JsonResponse {
         $payload = json_decode((string) $request->getContent(), true);
         if (!is_array($payload)) {
@@ -239,7 +240,18 @@ final class AuthController extends AbstractController
         $emailVerification->issueToken($user);
         $em->persist($user);
         $em->flush();
-        $emailVerification->sendVerificationEmail($user);
+
+        $emailSent = true;
+        try {
+            $emailVerification->sendVerificationEmail($user);
+        } catch (\Throwable $e) {
+            $emailSent = false;
+            $logger->error('API registration: verification email failed', [
+                'exception' => $e,
+                'userId' => $user->getId(),
+                'email' => $user->getEmail(),
+            ]);
+        }
 
         return $this->json([
             'success' => true,
@@ -247,7 +259,10 @@ final class AuthController extends AbstractController
                 'email' => $user->getEmail(),
                 'username' => $user->getUsername(),
                 'verified' => $user->isVerified(),
-                'message' => 'Account created. Please verify your email.',
+                'emailSent' => $emailSent,
+                'message' => $emailSent
+                    ? 'Account created. Please verify your email.'
+                    : 'Account created. We could not send the verification email. You can still sign in if an admin verifies your account.',
             ],
             'error' => null,
         ], 201);
