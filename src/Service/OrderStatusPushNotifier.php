@@ -54,13 +54,31 @@ final class OrderStatusPushNotifier
             $body .= sprintf(' (Tracking: %s)', $order->getTrackingNumber());
         }
 
+        if (!$this->fcm->isConfigured()) {
+            $this->logger->warning('Order status push skipped: FCM not configured on server (FIREBASE_SERVICE_ACCOUNT_JSON).');
+
+            return;
+        }
+
         try {
-            $this->fcm->sendToDevice($token, $title, $body, [
+            $sent = $this->fcm->sendToDevice($token, $title, $body, [
                 'type' => 'order_status',
                 'transactionId' => (string) $order->getTransactionId(),
                 'status' => $newStatus,
                 'statusLabel' => $order->getStatusLabel(),
             ]);
+            if ($sent) {
+                $this->logger->info('Order status push sent', [
+                    'email' => $email,
+                    'transactionId' => $order->getTransactionId(),
+                    'status' => $newStatus,
+                ]);
+            } else {
+                $this->logger->warning('Order status push failed (FCM send returned false)', [
+                    'email' => $email,
+                    'transactionId' => $order->getTransactionId(),
+                ]);
+            }
         } catch (\Throwable $e) {
             $this->logger->error('Order status push failed', [
                 'exception' => $e,

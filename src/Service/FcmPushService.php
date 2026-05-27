@@ -134,6 +134,13 @@ final class FcmPushService
                                 'body' => $body,
                             ],
                             'data' => $data,
+                            'android' => [
+                                'priority' => 'HIGH',
+                                'notification' => [
+                                    'channel_id' => 'order_updates',
+                                    'sound' => 'default',
+                                ],
+                            ],
                         ],
                     ],
                     'timeout' => 15,
