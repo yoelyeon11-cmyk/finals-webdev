@@ -44,6 +44,39 @@ final class AuthController extends AbstractController
         ]);
     }
 
+    #[Route('/me/fcm-token', name: 'api_v1_me_fcm_token', methods: ['POST'])]
+    public function registerFcmToken(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json([
+                'success' => false,
+                'data' => null,
+                'error' => ['code' => 'unauthorized', 'message' => 'Authentication required.'],
+            ], 401);
+        }
+
+        $payload = json_decode((string) $request->getContent(), true);
+        $token = is_array($payload) ? trim((string) ($payload['token'] ?? '')) : '';
+
+        if ($token === '') {
+            return $this->json([
+                'success' => false,
+                'data' => null,
+                'error' => ['code' => 'validation_error', 'message' => 'token is required.'],
+            ], 422);
+        }
+
+        $user->setFcmToken($token);
+        $em->flush();
+
+        return $this->json([
+            'success' => true,
+            'data' => ['registered' => true],
+            'error' => null,
+        ]);
+    }
+
     #[Route('/login/google', name: 'api_v1_login_google', methods: ['POST'])]
     public function loginWithGoogle(
         Request $request,

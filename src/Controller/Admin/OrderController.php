@@ -10,6 +10,7 @@ use App\Repository\OrderRepository;
 use App\Repository\CustomCosplayRequestRepository;
 use App\Repository\ProductRepository;
 use App\Service\ActivityLogger;
+use App\Service\OrderStatusPushNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -198,8 +199,13 @@ class OrderController extends AbstractController
     }
 
     #[Route('/{id}/update-status', name: 'admin_order_update_status', methods: ['POST'])]
-    public function updateStatus(Request $request, Order $order, EntityManagerInterface $em, ActivityLogger $logger): Response
-    {
+    public function updateStatus(
+        Request $request,
+        Order $order,
+        EntityManagerInterface $em,
+        ActivityLogger $logger,
+        OrderStatusPushNotifier $pushNotifier,
+    ): Response {
         $token = $request->request->get('_token');
         
         if (!$this->isCsrfTokenValid('order_status_' . $order->getId(), $token)) {
@@ -236,6 +242,8 @@ class OrderController extends AbstractController
         }
         
         $em->flush();
+
+        $pushNotifier->notifyIfStatusChanged($order, $oldStatus);
 
         $logger->log('Order Status Updated', 'Updated order ' . $order->getTransactionId() . ' status from "' . $oldStatus . '" to "' . $order->getStatus() . '"');
         $this->addFlash('success', 'Order status updated to: ' . $order->getStatusLabel());

@@ -55,6 +55,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $emailVerificationTokenExpiresAt = null;
 
+    #[ORM\Column(length: 512, nullable: true)]
+    private ?string $fcmToken = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -245,5 +248,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $now <= $this->emailVerificationTokenExpiresAt;
+    }
+
+    public function getFcmToken(): ?string
+    {
+        return $this->fcmToken;
+    }
+
+    public function setFcmToken(?string $fcmToken): static
+    {
+        $this->fcmToken = $fcmToken;
+
+        return $this;
     }
 }
