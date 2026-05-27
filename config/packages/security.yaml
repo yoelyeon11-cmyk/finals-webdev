@@ -83,6 +83,7 @@ security:
         - { path: ^/api/index, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/me, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/v1/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/login/google, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/verify-email, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/products, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/categories, roles: PUBLIC_ACCESS }
