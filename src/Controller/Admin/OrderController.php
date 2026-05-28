@@ -11,6 +11,7 @@ use App\Repository\CustomCosplayRequestRepository;
 use App\Repository\ProductRepository;
 use App\Service\ActivityLogger;
 use App\Service\OrderRealtimeEventStore;
+use App\Service\RealtimeBroadcastClient;
 use App\Service\OrderStatusPushNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -42,6 +43,7 @@ class OrderController extends AbstractController
             'orders' => $orders,
             'searchTerm' => $searchTerm,
             'latestOrderId' => $latestOrder?->getId(),
+            'websocketUrl' => trim((string) ($_ENV['APP_WS_URL'] ?? '')),
         ]);
     }
 
@@ -210,6 +212,7 @@ class OrderController extends AbstractController
         ActivityLogger $logger,
         OrderStatusPushNotifier $pushNotifier,
         OrderRealtimeEventStore $realtimeEventStore,
+        RealtimeBroadcastClient $realtimeBroadcast,
     ): Response {
         $token = $request->request->get('_token');
         
@@ -250,6 +253,13 @@ class OrderController extends AbstractController
 
         $pushNotifier->notifyIfStatusChanged($order, $oldStatus);
         $realtimeEventStore->publishStatusChanged($order, $oldStatus);
+        $realtimeBroadcast->publish('order.status.updated', [
+            'orderId' => $order->getId(),
+            'transactionId' => $order->getTransactionId(),
+            'customerEmail' => $order->getCustomerEmail(),
+            'oldStatus' => $oldStatus,
+            'status' => $order->getStatus(),
+        ]);
 
         $logger->log('Order Status Updated', 'Updated order ' . $order->getTransactionId() . ' status from "' . $oldStatus . '" to "' . $order->getStatus() . '"');
         $this->addFlash('success', 'Order status updated to: ' . $order->getStatusLabel());

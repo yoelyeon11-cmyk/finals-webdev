@@ -11,6 +11,7 @@ use App\Repository\CustomCosplayRequestRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductsRepository;
 use App\Service\OrderRealtimeEventStore;
+use App\Service\RealtimeBroadcastClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -57,6 +58,7 @@ final class CustomerController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         ProductsRepository $productsRepository,
+        RealtimeBroadcastClient $realtimeBroadcast,
     ): JsonResponse {
         $user = $this->requireUser();
         $payload = $this->decodeJson($request);
@@ -103,6 +105,12 @@ final class CustomerController extends AbstractController
 
         $em->persist($order);
         $em->flush();
+        $realtimeBroadcast->publish('order.created', [
+            'orderId' => $order->getId(),
+            'transactionId' => $order->getTransactionId(),
+            'customerEmail' => $order->getCustomerEmail(),
+            'status' => $order->getStatus(),
+        ]);
 
         return $this->json([
             'success' => true,
@@ -160,7 +168,11 @@ final class CustomerController extends AbstractController
     }
 
     #[Route('/custom-requests', name: 'api_v1_custom_requests_create', methods: ['POST'])]
-    public function createCustomRequest(Request $request, EntityManagerInterface $em): JsonResponse
+    public function createCustomRequest(
+        Request $request,
+        EntityManagerInterface $em,
+        RealtimeBroadcastClient $realtimeBroadcast,
+    ): JsonResponse
     {
         $user = $this->requireUser();
         $payload = $this->decodeJson($request);
@@ -188,6 +200,11 @@ final class CustomerController extends AbstractController
 
         $em->persist($requestEntity);
         $em->flush();
+        $realtimeBroadcast->publish('custom_request.created', [
+            'requestId' => $requestEntity->getId(),
+            'customerEmail' => $requestEntity->getCustomerEmail(),
+            'status' => $requestEntity->getStatus(),
+        ]);
 
         return $this->json([
             'success' => true,

@@ -26,6 +26,7 @@ class CustomCosplayRequestController extends AbstractController
         return $this->render('admin/custom_request/index.html.twig', [
             'requests' => $requests,
             'latestRequestId' => $latestRequest?->getId(),
+            'websocketUrl' => trim((string) ($_ENV['APP_WS_URL'] ?? '')),
         ]);
     }
 

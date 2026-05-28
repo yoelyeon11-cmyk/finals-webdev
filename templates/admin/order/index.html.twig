@@ -176,6 +176,7 @@
         let liveTimer = null;
         const LIVE_CHECK_MS = 1000;
         let knownLatestOrderId = Number('{{ latestOrderId ?? 0 }}') || 0;
+        const websocketUrl = '{{ websocketUrl|default("") }}';
 
         function initOrderStatusAutoRefresh() {
             const tableEl = $('#ordersTable');
@@ -251,6 +252,30 @@
                     pollLiveUpdates();
                 }
             }, LIVE_CHECK_MS);
+
+            if (websocketUrl) {
+                try {
+                    const ws = new WebSocket(websocketUrl);
+                    ws.onmessage = function (message) {
+                        try {
+                            const event = JSON.parse(message.data || '{}');
+                            if (event?.type === 'order.created' || event?.type === 'order.status.updated') {
+                                const currentSearch = table.search();
+                                const currentPage = table.page();
+                                sessionStorage.setItem(
+                                    'adminOrdersTableState',
+                                    JSON.stringify({ search: currentSearch, page: currentPage }),
+                                );
+                                window.location.reload();
+                            }
+                        } catch (e) {
+                            // ignore malformed websocket payloads
+                        }
+                    };
+                } catch (e) {
+                    // fallback polling remains active
+                }
+            }
         }
 
         document.addEventListener('DOMContentLoaded', initOrderStatusAutoRefresh);

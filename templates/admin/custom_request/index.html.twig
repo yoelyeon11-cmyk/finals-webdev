@@ -182,6 +182,7 @@
         let liveTimer = null;
         const LIVE_CHECK_MS = 1000;
         let knownLatestRequestId = Number('{{ latestRequestId ?? 0 }}') || 0;
+        const websocketUrl = '{{ websocketUrl|default("") }}';
 
         function initCustomRequestLiveTable() {
             const tableEl = $('#requestsTable');
@@ -255,6 +256,28 @@
                     pollLiveUpdates();
                 }
             }, LIVE_CHECK_MS);
+
+            if (websocketUrl) {
+                try {
+                    const ws = new WebSocket(websocketUrl);
+                    ws.onmessage = function (message) {
+                        try {
+                            const event = JSON.parse(message.data || '{}');
+                            if (event?.type === 'custom_request.created') {
+                                sessionStorage.setItem(
+                                    'adminCustomRequestsTableState',
+                                    JSON.stringify({ search: table.search(), page: table.page() }),
+                                );
+                                window.location.reload();
+                            }
+                        } catch (e) {
+                            // ignore malformed websocket payloads
+                        }
+                    };
+                } catch (e) {
+                    // fallback polling remains active
+                }
+            }
         }
 
         document.addEventListener('DOMContentLoaded', initCustomRequestLiveTable);
