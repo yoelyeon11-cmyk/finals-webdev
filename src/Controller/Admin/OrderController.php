@@ -43,7 +43,7 @@ class OrderController extends AbstractController
             'orders' => $orders,
             'searchTerm' => $searchTerm,
             'latestOrderId' => $latestOrder?->getId(),
-            'websocketUrl' => trim((string) ($_ENV['APP_WS_URL'] ?? '')),
+            'websocketUrl' => trim((string) ($_ENV['APP_WS_URL'] ?? $_SERVER['APP_WS_URL'] ?? ''), " \t\n\r\0\x0B\"'"),
         ]);
     }
 

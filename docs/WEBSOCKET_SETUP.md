@@ -4,9 +4,9 @@ This project now supports **true WebSocket** live updates for admin pages.
 
 ## 1) Deploy a separate WS service on Railway
 
-Create a new Railway service from this same repo, with:
+Create a new Railway service from the Appdev root repo, with:
 
-- **Root directory:** `ws-server`
+- **Root directory:** `realtime-websocket` (at Appdev root, outside `finals-webdev`)
 - **Build:** Node
 - **Start command:** `npm start`
 

@@ -8,15 +8,15 @@ final class RealtimeBroadcastClient
 {
     public function publish(string $type, array $payload): void
     {
-        $url = trim((string) ($_ENV['WS_BROADCAST_URL'] ?? ''));
+        $url = $this->env('WS_BROADCAST_URL');
         if ($url === '') {
             return;
         }
 
-        $secret = trim((string) ($_ENV['WS_BROADCAST_SECRET'] ?? ''));
+        $secret = $this->env('WS_BROADCAST_SECRET');
 
         try {
-            HttpClient::create()->request('POST', $url, [
+            $response = HttpClient::create()->request('POST', $url, [
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'X-WS-Secret' => $secret,
@@ -27,8 +27,16 @@ final class RealtimeBroadcastClient
                 ],
                 'timeout' => 3,
             ]);
+            // Force the HTTP request to complete before PHP exits this request.
+            $response->getStatusCode();
         } catch (\Throwable) {
             // Realtime broadcasts must never break order/request creation flow.
         }
+    }
+
+    private function env(string $key): string
+    {
+        $value = $_ENV[$key] ?? $_SERVER[$key] ?? '';
+        return trim((string) $value, " \t\n\r\0\x0B\"'");
     }
 }
