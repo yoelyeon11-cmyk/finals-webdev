@@ -10,6 +10,7 @@ use App\Repository\CategoryRepository;
 use App\Repository\CustomCosplayRequestRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductsRepository;
+use App\Service\OrderRealtimeEventStore;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -123,6 +124,20 @@ final class CustomerController extends AbstractController
         return $this->json([
             'success' => true,
             'data' => $this->serializeOrder($order),
+            'error' => null,
+        ]);
+    }
+
+    #[Route('/orders/realtime/events', name: 'api_v1_orders_realtime', methods: ['GET'])]
+    public function orderRealtime(Request $request, OrderRealtimeEventStore $eventStore): JsonResponse
+    {
+        $user = $this->requireUser();
+        $since = max(0, (int) $request->query->get('since', 0));
+        $event = $eventStore->waitForEvent($user->getEmail(), $since, 20);
+
+        return $this->json([
+            'success' => true,
+            'data' => $event,
             'error' => null,
         ]);
     }

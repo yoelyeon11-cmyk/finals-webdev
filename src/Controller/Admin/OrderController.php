@@ -10,6 +10,7 @@ use App\Repository\OrderRepository;
 use App\Repository\CustomCosplayRequestRepository;
 use App\Repository\ProductRepository;
 use App\Service\ActivityLogger;
+use App\Service\OrderRealtimeEventStore;
 use App\Service\OrderStatusPushNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -205,6 +206,7 @@ class OrderController extends AbstractController
         EntityManagerInterface $em,
         ActivityLogger $logger,
         OrderStatusPushNotifier $pushNotifier,
+        OrderRealtimeEventStore $realtimeEventStore,
     ): Response {
         $token = $request->request->get('_token');
         
@@ -244,6 +246,7 @@ class OrderController extends AbstractController
         $em->flush();
 
         $pushNotifier->notifyIfStatusChanged($order, $oldStatus);
+        $realtimeEventStore->publishStatusChanged($order, $oldStatus);
 
         $logger->log('Order Status Updated', 'Updated order ' . $order->getTransactionId() . ' status from "' . $oldStatus . '" to "' . $order->getStatus() . '"');
         $this->addFlash('success', 'Order status updated to: ' . $order->getStatusLabel());
