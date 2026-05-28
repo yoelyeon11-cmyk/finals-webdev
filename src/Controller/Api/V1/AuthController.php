@@ -187,7 +187,6 @@ final class AuthController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher,
-        EmailVerificationService $emailVerification,
         LoggerInterface $logger,
     ): JsonResponse {
         $payload = json_decode((string) $request->getContent(), true);
@@ -261,26 +260,12 @@ final class AuthController extends AbstractController
             ], 500);
         }
 
-        $emailSent = false;
-        try {
-            $emailVerification->issueToken($user);
-            $emailVerification->sendVerificationEmail($user);
-            $emailSent = true;
-            $em->flush();
-        } catch (\Throwable $e) {
-            $logger->warning('API registration: verification email skipped', [
-                'exception' => $e,
-                'userId' => $user->getId(),
-            ]);
-        }
-
         return $this->json([
             'success' => true,
             'data' => [
                 'email' => $user->getEmail(),
                 'username' => $user->getUsername(),
                 'verified' => $user->isVerified(),
-                'emailSent' => $emailSent,
                 'message' => 'Account created. You can sign in now.',
             ],
             'error' => null,
