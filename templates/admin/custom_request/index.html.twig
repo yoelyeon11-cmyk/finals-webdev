@@ -180,7 +180,7 @@
     <script>
     (function () {
         let liveTimer = null;
-        const LIVE_CHECK_MS = 2000;
+        const LIVE_CHECK_MS = 1000;
         let knownLatestRequestId = Number('{{ latestRequestId ?? 0 }}') || 0;
 
         function initCustomRequestLiveTable() {

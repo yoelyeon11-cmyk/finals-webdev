@@ -114,15 +114,12 @@
 {% block body %}
 <div class="header">
     <h2>Order Status & Tracking</h2>
-    <div style="display: flex; gap: 10px; align-items: center;">
-        <small style="color:#666;">Auto-refresh every 12s</small>
-        <a href="{{ path('admin_order_place') }}" class="btn btn-primary">
-            <svg fill="currentColor" viewBox="0 0 20 20" style="width: 16px; height: 16px; margin-right: 4px;">
-                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
-            </svg>
-            Place Order
-        </a>
-    </div>
+    <a href="{{ path('admin_order_place') }}" class="btn btn-primary">
+        <svg fill="currentColor" viewBox="0 0 20 20" style="width: 16px; height: 16px; margin-right: 4px;">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+        </svg>
+        Place Order
+    </a>
 </div>
 
 <div class="orders-table table-section">
@@ -177,7 +174,7 @@
     <script>
     (function () {
         let liveTimer = null;
-        const LIVE_CHECK_MS = 2000;
+        const LIVE_CHECK_MS = 1000;
         let knownLatestOrderId = Number('{{ latestOrderId ?? 0 }}') || 0;
 
         function initOrderStatusAutoRefresh() {
