@@ -175,8 +175,21 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script>
-    $(document).ready(function() {
-        const table = $('#ordersTable').DataTable({
+    (function () {
+        let refreshTimer = null;
+        const REFRESH_MS = 12000;
+
+        function initOrderStatusAutoRefresh() {
+            const tableEl = $('#ordersTable');
+            if (!tableEl.length) {
+                return;
+            }
+
+            if ($.fn.DataTable.isDataTable('#ordersTable')) {
+                $('#ordersTable').DataTable().destroy();
+            }
+
+            const table = tableEl.DataTable({
             responsive: true,
             order: [[5, 'desc']],
             pageLength: 25,
@@ -189,10 +202,7 @@
             }
         });
 
-        let refreshTimer = null;
-        const REFRESH_MS = 12000;
-
-        function scheduleRefresh() {
+            function scheduleRefresh() {
             if (refreshTimer) {
                 clearTimeout(refreshTimer);
             }
@@ -218,8 +228,8 @@
             }, REFRESH_MS);
         }
 
-        const saved = sessionStorage.getItem('adminOrdersTableState');
-        if (saved) {
+            const saved = sessionStorage.getItem('adminOrdersTableState');
+            if (saved) {
             try {
                 const state = JSON.parse(saved);
                 if (typeof state.search === 'string') {
@@ -235,7 +245,11 @@
             }
         }
 
-        scheduleRefresh();
-    });
+            scheduleRefresh();
+        }
+
+        document.addEventListener('DOMContentLoaded', initOrderStatusAutoRefresh);
+        document.addEventListener('turbo:load', initOrderStatusAutoRefresh);
+    })();
     </script>
 {% endblock %}
