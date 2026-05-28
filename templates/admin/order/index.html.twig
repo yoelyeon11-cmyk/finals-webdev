@@ -176,8 +176,9 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script>
     (function () {
-        let refreshTimer = null;
-        const REFRESH_MS = 12000;
+        let liveTimer = null;
+        const LIVE_CHECK_MS = 2000;
+        let knownLatestOrderId = Number('{{ latestOrderId ?? 0 }}') || 0;
 
         function initOrderStatusAutoRefresh() {
             const tableEl = $('#ordersTable');
@@ -202,31 +203,31 @@
             }
         });
 
-            function scheduleRefresh() {
-            if (refreshTimer) {
-                clearTimeout(refreshTimer);
-            }
+            async function pollLiveUpdates() {
+                try {
+                    const res = await fetch('{{ path("admin_realtime_updates") }}', {
+                        credentials: 'include',
+                        headers: { Accept: 'application/json' },
+                    });
+                    if (!res.ok) {
+                        return;
+                    }
+                    const payload = await res.json();
+                    const serverLatestOrderId = Number(payload?.data?.latestOrderId || 0);
 
-            refreshTimer = setTimeout(function () {
-                // Avoid interrupting search typing.
-                const active = document.activeElement;
-                const isTypingInSearch =
-                    active &&
-                    active.tagName === 'INPUT' &&
-                    active.closest('.dataTables_filter');
-
-                if (!document.hidden && !isTypingInSearch) {
-                    const currentSearch = table.search();
-                    const currentPage = table.page();
-                    const state = { search: currentSearch, page: currentPage };
-                    sessionStorage.setItem('adminOrdersTableState', JSON.stringify(state));
-                    window.location.reload();
-                    return;
+                    if (serverLatestOrderId > knownLatestOrderId) {
+                        const currentSearch = table.search();
+                        const currentPage = table.page();
+                        const state = { search: currentSearch, page: currentPage };
+                        sessionStorage.setItem('adminOrdersTableState', JSON.stringify(state));
+                        window.location.reload();
+                        return;
+                    }
+                    knownLatestOrderId = Math.max(knownLatestOrderId, serverLatestOrderId);
+                } catch (e) {
+                    // silent fallback: user can still refresh manually
                 }
-
-                scheduleRefresh();
-            }, REFRESH_MS);
-        }
+            }
 
             const saved = sessionStorage.getItem('adminOrdersTableState');
             if (saved) {
@@ -245,7 +246,14 @@
             }
         }
 
-            scheduleRefresh();
+            if (liveTimer) {
+                clearInterval(liveTimer);
+            }
+            liveTimer = setInterval(() => {
+                if (!document.hidden) {
+                    pollLiveUpdates();
+                }
+            }, LIVE_CHECK_MS);
         }
 
         document.addEventListener('DOMContentLoaded', initOrderStatusAutoRefresh);

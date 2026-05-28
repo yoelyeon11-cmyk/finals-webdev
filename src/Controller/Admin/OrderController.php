@@ -36,9 +36,12 @@ class OrderController extends AbstractController
             $orders = $repository->findBy([], ['orderDate' => 'DESC']);
         }
 
+        $latestOrder = $repository->findOneBy([], ['id' => 'DESC']);
+
         return $this->render('admin/order/index.html.twig', [
             'orders' => $orders,
             'searchTerm' => $searchTerm,
+            'latestOrderId' => $latestOrder?->getId(),
         ]);
     }
 

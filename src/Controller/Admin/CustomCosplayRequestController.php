@@ -21,9 +21,11 @@ class CustomCosplayRequestController extends AbstractController
     public function index(CustomCosplayRequestRepository $repository): Response
     {
         $requests = $repository->findBy([], ['createdAt' => 'DESC']);
+        $latestRequest = $repository->findOneBy([], ['id' => 'DESC']);
 
         return $this->render('admin/custom_request/index.html.twig', [
             'requests' => $requests,
+            'latestRequestId' => $latestRequest?->getId(),
         ]);
     }
 

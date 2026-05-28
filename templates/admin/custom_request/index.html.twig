@@ -178,8 +178,22 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script>
-    $(document).ready(function() {
-        $('#requestsTable').DataTable({
+    (function () {
+        let liveTimer = null;
+        const LIVE_CHECK_MS = 2000;
+        let knownLatestRequestId = Number('{{ latestRequestId ?? 0 }}') || 0;
+
+        function initCustomRequestLiveTable() {
+            const tableEl = $('#requestsTable');
+            if (!tableEl.length) {
+                return;
+            }
+
+            if ($.fn.DataTable.isDataTable('#requestsTable')) {
+                $('#requestsTable').DataTable().destroy();
+            }
+
+            const table = tableEl.DataTable({
             responsive: true,
             order: [[5, 'desc']],
             pageLength: 25,
@@ -191,6 +205,60 @@
                 zeroRecords: "No matching requests found"
             }
         });
-    });
+
+            async function pollLiveUpdates() {
+                try {
+                    const res = await fetch('{{ path("admin_realtime_updates") }}', {
+                        credentials: 'include',
+                        headers: { Accept: 'application/json' },
+                    });
+                    if (!res.ok) {
+                        return;
+                    }
+                    const payload = await res.json();
+                    const serverLatestRequestId = Number(payload?.data?.latestCustomRequestId || 0);
+
+                    if (serverLatestRequestId > knownLatestRequestId) {
+                        const state = { search: table.search(), page: table.page() };
+                        sessionStorage.setItem('adminCustomRequestsTableState', JSON.stringify(state));
+                        window.location.reload();
+                        return;
+                    }
+                    knownLatestRequestId = Math.max(knownLatestRequestId, serverLatestRequestId);
+                } catch (e) {
+                    // silent fallback: user can still refresh manually
+                }
+            }
+
+            const saved = sessionStorage.getItem('adminCustomRequestsTableState');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    if (typeof state.search === 'string') {
+                        table.search(state.search).draw();
+                    }
+                    if (typeof state.page === 'number') {
+                        table.page(state.page).draw('page');
+                    }
+                } catch (e) {
+                    // ignore parse failures
+                } finally {
+                    sessionStorage.removeItem('adminCustomRequestsTableState');
+                }
+            }
+
+            if (liveTimer) {
+                clearInterval(liveTimer);
+            }
+            liveTimer = setInterval(() => {
+                if (!document.hidden) {
+                    pollLiveUpdates();
+                }
+            }, LIVE_CHECK_MS);
+        }
+
+        document.addEventListener('DOMContentLoaded', initCustomRequestLiveTable);
+        document.addEventListener('turbo:load', initCustomRequestLiveTable);
+    })();
     </script>
 {% endblock %}
