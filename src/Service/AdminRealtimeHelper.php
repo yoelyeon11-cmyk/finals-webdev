@@ -35,10 +35,37 @@ final class AdminRealtimeHelper
                 $product->getStock() ?? 0,
                 $product->getPrice(),
                 $product->getName(),
+                $product->getCategory()?->getId() ?? 0,
             ]);
         }
 
         return hash('sha256', implode('|', $parts));
+    }
+
+    public function dashboardFingerprint(
+        ProductsRepository $productRepository,
+        CategoryRepository $categoryRepository,
+    ): string {
+        $lowStockCount = (int) $productRepository->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.stock <= :lowStock')
+            ->setParameter('lowStock', 10)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $totalValue = (float) ($productRepository->createQueryBuilder('p')
+            ->select('SUM(p.price * p.stock)')
+            ->getQuery()
+            ->getSingleScalarResult() ?? 0);
+
+        return hash('sha256', implode('|', [
+            $productRepository->count([]),
+            $categoryRepository->count([]),
+            $lowStockCount,
+            number_format($totalValue, 2, '.', ''),
+            $this->productsFingerprint($productRepository),
+            $this->categoriesFingerprint($categoryRepository),
+        ]));
     }
 
     public function categoriesFingerprint(CategoryRepository $categoryRepository): string

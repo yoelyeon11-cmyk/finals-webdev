@@ -153,15 +153,33 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script>
     (function () {
-        let liveTimer = null;
-        let dashboardWs = null;
         let dashboardTable = null;
-        const LIVE_CHECK_MS = 1000;
-        let knownProductsFingerprint = '{{ productsFingerprint|default("") }}';
-        let knownLatestProductId = Number('{{ latestProductId ?? 0 }}') || 0;
-        const websocketUrl = '{{ websocketUrl|default("") }}';
+        let pollTimer = null;
+        let unsubscribeRealtime = null;
+        let refreshInFlight = false;
+        let knownDashboardFingerprint = '{{ dashboardFingerprint|default("") }}';
         const statsJsonUrl = '{{ path("admin_dashboard_stats_json") }}';
         const realtimeUpdatesUrl = '{{ path("admin_realtime_updates") }}';
+        const DASHBOARD_EVENT_TYPES = [
+            'product.created',
+            'product.updated',
+            'product.deleted',
+            'inventory.updated',
+            'category.created',
+            'category.updated',
+            'category.deleted',
+            'order.created',
+            'order.status.updated',
+            'custom_request.created',
+            'custom_request.updated',
+            'verification.updated',
+        ];
+        const DASHBOARD_FINGERPRINT_KEYS = [
+            'dashboardFingerprint',
+            'productsFingerprint',
+            'categoriesFingerprint',
+            'inventoryFingerprint',
+        ];
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -179,16 +197,6 @@
                 return '<span class="badge badge-warning">Low Stock</span>';
             }
             return '<span class="badge badge-danger">Out of Stock</span>';
-        }
-
-        function stockOrder(stock) {
-            if (stock > 20) {
-                return 3;
-            }
-            if (stock > 0) {
-                return 2;
-            }
-            return 1;
         }
 
         function applyDashboardData(data) {
@@ -232,10 +240,15 @@
         }
 
         async function refreshDashboardFromServer() {
+            if (refreshInFlight) {
+                return;
+            }
+            refreshInFlight = true;
             try {
                 const res = await fetch(statsJsonUrl, {
                     credentials: 'include',
                     headers: { Accept: 'application/json' },
+                    cache: 'no-store',
                 });
                 if (!res.ok) {
                     return;
@@ -244,32 +257,35 @@
                 if (!payload?.success || !payload?.data) {
                     return;
                 }
-                knownProductsFingerprint = payload.data.productsFingerprint || knownProductsFingerprint;
-                knownLatestProductId = Math.max(knownLatestProductId, Number(payload.data.latestProductId || 0));
+                knownDashboardFingerprint = payload.data.dashboardFingerprint || knownDashboardFingerprint;
+                if (window.AdminRealtime?.seedFingerprints) {
+                    window.AdminRealtime.seedFingerprints({
+                        dashboardFingerprint: knownDashboardFingerprint,
+                        productsFingerprint: payload.data.productsFingerprint,
+                        categoriesFingerprint: payload.data.categoriesFingerprint,
+                    });
+                }
                 applyDashboardData(payload.data);
             } catch (e) {
                 // silent fallback
+            } finally {
+                refreshInFlight = false;
             }
         }
 
-        async function pollLiveUpdates() {
+        async function pollDashboardFingerprint() {
             try {
                 const res = await fetch(realtimeUpdatesUrl, {
                     credentials: 'include',
                     headers: { Accept: 'application/json' },
+                    cache: 'no-store',
                 });
                 if (!res.ok) {
                     return;
                 }
                 const payload = await res.json();
-                const data = payload?.data || {};
-                const serverFingerprint = String(data.productsFingerprint || '');
-                const serverLatestProductId = Number(data.latestProductId || 0);
-
-                if (
-                    (serverFingerprint && serverFingerprint !== knownProductsFingerprint)
-                    || serverLatestProductId > knownLatestProductId
-                ) {
+                const serverFingerprint = String(payload?.data?.dashboardFingerprint || '');
+                if (serverFingerprint && serverFingerprint !== knownDashboardFingerprint) {
                     await refreshDashboardFromServer();
                 }
             } catch (e) {
@@ -277,32 +293,29 @@
             }
         }
 
-            async function handleRealtimeEvent(event) {
-                const type = event?.type || '';
-                if (
-                    type === 'product.created'
-                    || type === 'product.updated'
-                    || type === 'product.deleted'
-                    || type === 'inventory.updated'
-                    || type === 'category.created'
-                    || type === 'category.updated'
-                    || type === 'category.deleted'
-                    || type === 'order.created'
-                    || type === 'custom_request.created'
-                    || type === 'verification.updated'
-                ) {
-                    await refreshDashboardFromServer();
-                }
+        function shouldRefreshForEvent(event) {
+            const type = event?.type || '';
+            if (type === 'fingerprint.changed') {
+                return DASHBOARD_FINGERPRINT_KEYS.includes(event?.payload?.key);
             }
+            return DASHBOARD_EVENT_TYPES.includes(type);
+        }
+
+        function handleRealtimeEvent(event) {
+            if (!shouldRefreshForEvent(event)) {
+                return;
+            }
+            refreshDashboardFromServer();
+        }
 
         function teardownLiveDashboard() {
-            if (liveTimer) {
-                clearInterval(liveTimer);
-                liveTimer = null;
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
             }
-            if (dashboardWs) {
-                dashboardWs.close();
-                dashboardWs = null;
+            if (typeof unsubscribeRealtime === 'function') {
+                unsubscribeRealtime();
+                unsubscribeRealtime = null;
             }
         }
 
@@ -331,29 +344,24 @@
                 },
             });
 
-            pollLiveUpdates();
-
-            liveTimer = setInterval(function () {
-                if (!document.hidden) {
-                    pollLiveUpdates();
-                }
-            }, LIVE_CHECK_MS);
-
-            if (websocketUrl) {
-                try {
-                    dashboardWs = new WebSocket(websocketUrl);
-                    dashboardWs.onmessage = function (message) {
-                        try {
-                            const event = JSON.parse(message.data || '{}');
-                            handleRealtimeEvent(event);
-                        } catch (e) {
-                            // ignore malformed payloads
-                        }
-                    };
-                } catch (e) {
-                    // polling fallback remains active
-                }
+            if (window.AdminRealtime) {
+                window.AdminRealtime.seedFingerprints({
+                    dashboardFingerprint: knownDashboardFingerprint,
+                    productsFingerprint: '{{ productsFingerprint|default("") }}',
+                    categoriesFingerprint: '{{ categoriesFingerprint|default("") }}',
+                });
+                unsubscribeRealtime = window.AdminRealtime.subscribe(handleRealtimeEvent);
             }
+            window.addEventListener('admin:realtime', function (event) {
+                handleRealtimeEvent(event.detail);
+            });
+
+            pollDashboardFingerprint();
+            pollTimer = setInterval(function () {
+                if (!document.hidden) {
+                    pollDashboardFingerprint();
+                }
+            }, 1000);
         }
 
         document.addEventListener('DOMContentLoaded', initDashboardLive);

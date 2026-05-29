@@ -32,6 +32,8 @@ class DashboardController extends AbstractController
             'recentProducts' => $productRepository->findBy([], ['id' => 'DESC']),
             'latestProductId' => $latestProduct?->getId(),
             'productsFingerprint' => $this->catalogRealtime->productsFingerprint($productRepository),
+            'categoriesFingerprint' => $this->catalogRealtime->categoriesFingerprint($categoryRepository),
+            'dashboardFingerprint' => $this->catalogRealtime->dashboardFingerprint($productRepository, $categoryRepository),
             'websocketUrl' => $this->catalogRealtime->websocketUrl(),
         ]);
     }
@@ -48,6 +50,8 @@ class DashboardController extends AbstractController
             'data' => [
                 'stats' => $this->buildStats($productRepository, $categoryRepository),
                 'productsFingerprint' => $this->catalogRealtime->productsFingerprint($productRepository),
+                'categoriesFingerprint' => $this->catalogRealtime->categoriesFingerprint($categoryRepository),
+                'dashboardFingerprint' => $this->catalogRealtime->dashboardFingerprint($productRepository, $categoryRepository),
                 'latestProductId' => $productRepository->findOneBy([], ['id' => 'DESC'])?->getId(),
                 'recentProducts' => array_map(
                     static fn ($product) => [

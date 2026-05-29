@@ -45,6 +45,7 @@ final class RealtimeController extends AbstractController
                 'productsFingerprint' => $this->realtime->productsFingerprint($products),
                 'categoriesFingerprint' => $this->realtime->categoriesFingerprint($categories),
                 'inventoryFingerprint' => $this->realtime->inventoryFingerprint($inventory, $products),
+                'dashboardFingerprint' => $this->realtime->dashboardFingerprint($products, $categories),
                 'verificationFingerprint' => $this->realtime->verificationFingerprint($customRequests),
             ],
             'error' => null,

@@ -2,8 +2,11 @@
     'use strict';
 
     const LIVE_CHECK_MS = 1000;
+    const WS_RECONNECT_MS = 3000;
     let ws = null;
     let pollTimer = null;
+    let wsUrl = '';
+    let wsReconnectTimer = null;
     let knownFingerprints = {};
     const listeners = new Set();
 
@@ -27,11 +30,12 @@
     }
 
     function connectWebSocket(url) {
-        if (!url || ws) {
+        wsUrl = url || wsUrl;
+        if (!wsUrl || ws) {
             return;
         }
         try {
-            ws = new WebSocket(url);
+            ws = new WebSocket(wsUrl);
             ws.onmessage = function (message) {
                 try {
                     const event = JSON.parse(message.data || '{}');
@@ -44,10 +48,33 @@
             };
             ws.onclose = function () {
                 ws = null;
+                if (wsUrl && !wsReconnectTimer) {
+                    wsReconnectTimer = window.setTimeout(function () {
+                        wsReconnectTimer = null;
+                        connectWebSocket(wsUrl);
+                    }, WS_RECONNECT_MS);
+                }
+            };
+            ws.onerror = function () {
+                if (ws) {
+                    ws.close();
+                }
             };
         } catch (e) {
             ws = null;
         }
+    }
+
+    function seedFingerprints(fingerprints) {
+        if (!fingerprints || typeof fingerprints !== 'object') {
+            return;
+        }
+        Object.keys(fingerprints).forEach(function (key) {
+            const value = fingerprints[key];
+            if (value) {
+                knownFingerprints[key] = value;
+            }
+        });
     }
 
     async function pollUpdates(updatesUrl) {
@@ -82,10 +109,18 @@
         const updatesUrl = config?.updatesUrl;
         const websocketUrl = config?.websocketUrl || '';
         if (config?.fingerprints) {
-            knownFingerprints = Object.assign({}, config.fingerprints);
+            seedFingerprints(config.fingerprints);
         }
         if (pollTimer) {
             clearInterval(pollTimer);
+        }
+        if (wsReconnectTimer) {
+            clearTimeout(wsReconnectTimer);
+            wsReconnectTimer = null;
+        }
+        if (ws) {
+            ws.close();
+            ws = null;
         }
         connectWebSocket(websocketUrl);
         if (updatesUrl) {
@@ -178,6 +213,7 @@
 
     window.AdminRealtime = {
         initHub: initHub,
+        seedFingerprints: seedFingerprints,
         subscribe: subscribe,
         syncDataTable: syncDataTable,
         escapeHtml: escapeHtml,
