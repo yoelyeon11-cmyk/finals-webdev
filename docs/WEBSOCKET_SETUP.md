@@ -53,3 +53,13 @@ In the existing `finals-webdev` Railway web service, set:
 ## 4) Fallback
 
 If WS is unavailable, admin pages still poll `/admin/realtime/updates`, and mobile keeps long-polling `/api/v1/orders/realtime/events`.
+
+## 5) Railway PHP server (required)
+
+The production start command must route all requests through Symfony:
+
+```bash
+php -S 0.0.0.0:${PORT} -t public public/index.php
+```
+
+Without `public/index.php` as the router script, URLs ending in `.json` (for example `/admin/stats.json`) return **404** and live admin updates will not work.

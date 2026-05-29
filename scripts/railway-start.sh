@@ -52,4 +52,5 @@ php bin/console cache:warmup --env=prod
 
 PORT="${PORT:-8080}"
 echo "[railway] Starting server on 0.0.0.0:${PORT}"
-exec php -S "0.0.0.0:${PORT}" -t public
+# public/index.php must be the router script — otherwise paths like /admin/stats.json 404
+exec php -S "0.0.0.0:${PORT}" -t public public/index.php
