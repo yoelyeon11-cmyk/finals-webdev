@@ -24,13 +24,12 @@ when@prod:
         trusted_proxies: 'REMOTE_ADDR'
         trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-host']
         session:
-            handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler
             cookie_secure: auto
             cookie_samesite: lax
             cookie_httponly: true
             gc_maxlifetime: 86400
             cookie_lifetime: 86400
-            save_path: '%kernel.project_dir%/var/sessions'
+            save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
 
 when@test:
     framework:
