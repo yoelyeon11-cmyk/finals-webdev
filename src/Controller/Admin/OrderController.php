@@ -270,6 +270,7 @@ class OrderController extends AbstractController
             'customerEmail' => $order->getCustomerEmail(),
             'oldStatus' => $oldStatus,
             'status' => $order->getStatus(),
+            'statusLabel' => $order->getStatusLabel(),
         ]);
 
         $logger->log('Order Status Updated', 'Updated order ' . $order->getTransactionId() . ' status from "' . $oldStatus . '" to "' . $order->getStatus() . '"');

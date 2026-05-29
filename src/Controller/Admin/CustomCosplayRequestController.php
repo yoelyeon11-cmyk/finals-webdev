@@ -6,8 +6,10 @@ use App\Entity\CustomCosplayRequest;
 use App\Form\CustomCosplayRequestType;
 use App\Repository\CustomCosplayRequestRepository;
 use App\Service\ActivityLogger;
+use App\Service\RealtimeBroadcastClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,8 +33,12 @@ class CustomCosplayRequestController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_custom_request_new')]
-    public function new(Request $request, EntityManagerInterface $em, ActivityLogger $logger): Response
-    {
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+        ActivityLogger $logger,
+        RealtimeBroadcastClient $realtimeBroadcast,
+    ): Response {
         $customRequest = new CustomCosplayRequest();
         $form = $this->createForm(CustomCosplayRequestType::class, $customRequest, [
             'include_status' => false,
@@ -44,6 +50,11 @@ class CustomCosplayRequestController extends AbstractController
             $em->persist($customRequest);
             $em->flush();
 
+            $realtimeBroadcast->publish('custom_request.created', [
+                'requestId' => $customRequest->getId(),
+                'customerEmail' => $customRequest->getCustomerEmail(),
+            ]);
+
             $logger->log('Custom Request Created', 'Created custom request for: ' . $customRequest->getCustomerName() . ' - ' . $customRequest->getCosplayCharacter());
             $this->addFlash('success', 'Custom cosplay request created successfully! It will appear in Verification for review.');
             return $this->redirectToRoute('admin_verification_index');
@@ -51,6 +62,16 @@ class CustomCosplayRequestController extends AbstractController
 
         return $this->render('admin/custom_request/new.html.twig', [
             'form' => $form,
+        ]);
+    }
+
+    #[Route('/row/{id}', name: 'admin_custom_request_row_json', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function rowJson(CustomCosplayRequest $customRequest): JsonResponse
+    {
+        return $this->json([
+            'success' => true,
+            'data' => $this->serializeAdminCustomRequestRow($customRequest),
+            'error' => null,
         ]);
     }
 
@@ -63,14 +84,24 @@ class CustomCosplayRequestController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_custom_request_edit')]
-    public function edit(Request $request, CustomCosplayRequest $customRequest, EntityManagerInterface $em, ActivityLogger $logger): Response
-    {
+    public function edit(
+        Request $request,
+        CustomCosplayRequest $customRequest,
+        EntityManagerInterface $em,
+        ActivityLogger $logger,
+        RealtimeBroadcastClient $realtimeBroadcast,
+    ): Response {
         $form = $this->createForm(CustomCosplayRequestType::class, $customRequest);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $customRequest->setUpdatedAt(new \DateTimeImmutable());
             $em->flush();
+
+            $realtimeBroadcast->publish('custom_request.updated', [
+                'requestId' => $customRequest->getId(),
+                'status' => $customRequest->getStatus(),
+            ]);
 
             $logger->log('Custom Request Updated', 'Updated custom request ID: ' . $customRequest->getId() . ' for ' . $customRequest->getCustomerName());
             $this->addFlash('success', 'Custom cosplay request updated successfully!');
@@ -85,11 +116,19 @@ class CustomCosplayRequestController extends AbstractController
 
     #[Route('/{id}/verify', name: 'admin_custom_request_verify', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function verify(CustomCosplayRequest $customRequest, EntityManagerInterface $em): Response
-    {
+    public function verify(
+        CustomCosplayRequest $customRequest,
+        EntityManagerInterface $em,
+        RealtimeBroadcastClient $realtimeBroadcast,
+    ): Response {
         $customRequest->setStatus('approved');
         $customRequest->setUpdatedAt(new \DateTimeImmutable());
         $em->flush();
+
+        $realtimeBroadcast->publish('custom_request.updated', [
+            'requestId' => $customRequest->getId(),
+            'status' => $customRequest->getStatus(),
+        ]);
 
         $this->addFlash('success', 'Request verified and approved!');
         return $this->redirectToRoute('admin_custom_request_show', ['id' => $customRequest->getId()]);
@@ -100,5 +139,30 @@ class CustomCosplayRequestController extends AbstractController
     {
         // Redirect to order creation with pre-filled data
         return $this->redirectToRoute('admin_order_create_from_request', ['requestId' => $customRequest->getId()]);
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeAdminCustomRequestRow(CustomCosplayRequest $request): array
+    {
+        $status = (string) $request->getStatus();
+        $statusBadgeClass = match ($status) {
+            'approved' => 'success',
+            'rejected' => 'danger',
+            default => 'warning',
+        };
+
+        return [
+            'id' => $request->getId(),
+            'customerName' => $request->getCustomerName(),
+            'customerEmail' => $request->getCustomerEmail(),
+            'cosplayCharacter' => $request->getCosplayCharacter(),
+            'estimatedCost' => $request->getEstimatedCost(),
+            'status' => $status,
+            'statusLabel' => $request->getStatusLabel(),
+            'statusBadgeClass' => $statusBadgeClass,
+            'createdAt' => $request->getCreatedAt()?->format('M d, Y'),
+            'showUrl' => $this->generateUrl('admin_custom_request_show', ['id' => $request->getId()]),
+            'editUrl' => $this->generateUrl('admin_custom_request_edit', ['id' => $request->getId()]),
+        ];
     }
 }

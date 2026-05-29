@@ -38,8 +38,15 @@ In the existing `finals-webdev` Railway web service, set:
   - `order.status.updated`
 - Admin Custom Request page listens for:
   - `custom_request.created`
-- On event, table reloads immediately.
+- On event, admin tables/cards update in place (no full page reload).
+- Mobile app uses React Native `WebSocket` plus HTTP long-poll fallback.
+
+### Event types
+
+- `order.created`, `order.status.updated`
+- `custom_request.created`, `custom_request.updated`
+- `product.created`, `product.updated`, `product.deleted`
 
 ## 4) Fallback
 
-If WS is unavailable, the existing authenticated polling fallback still runs.
+If WS is unavailable, admin pages still poll `/admin/realtime/updates`, and mobile keeps long-polling `/api/v1/orders/realtime/events`.

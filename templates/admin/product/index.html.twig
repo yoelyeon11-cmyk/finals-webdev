@@ -19,6 +19,13 @@
             font-weight: 700;
             font-size: 1.1em;
         }
+        .card-item.product-live-highlight {
+            animation: productLiveHighlight 2.2s ease;
+        }
+        @keyframes productLiveHighlight {
+            0% { box-shadow: 0 0 0 3px #fff3cd; }
+            100% { box-shadow: none; }
+        }
     </style>
 {% endblock %}
 
@@ -28,39 +35,300 @@
         <a class="btn btn-primary" href="{{ path('admin_product_new') }}">New Product</a>
     </div>
 
-    {% if products is not empty %}
-        <div class="cards-grid">
-            {% for product in products %}
-                <div class="card-item">
-                    <div class="card-thumb">
-                        {% if product.image %}
-                            <img src="{{ product_image_url(product.image) }}" alt="{{ product.name }}">
-                        {% else %}
-                            <div class="placeholder">📦</div>
-                        {% endif %}
+    <div id="productsGrid" class="cards-grid">
+        {% for product in products %}
+            <div class="card-item" data-product-id="{{ product.id }}">
+                <div class="card-thumb">
+                    {% if product.image %}
+                        <img src="{{ product_image_url(product.image) }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="placeholder">📦</div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="card-title">{{ product.name }}</div>
+                    <div class="meta">
+                        <span>Price: ${{ product.price|number_format(2) }}</span>
+                        <span>Stock: <strong>{{ product.stock ?? 0 }}</strong></span>
+                        <span>{{ product.category ? product.category.name : 'No Category' }}</span>
                     </div>
-                    <div class="card-body">
-                        <div class="card-title">{{ product.name }}</div>
-                        <div class="meta">
-                            <span>Price: ${{ product.price|number_format(2) }}</span>
-                            <span>Stock: <strong>{{ product.stock ?? 0 }}</strong></span>
-                            <span>{{ product.category ? product.category.name : 'No Category' }}</span>
-                        </div>
-                        <div class="actions">
-                            <a href="{{ path('admin_product_show', {'id': product.id}) }}" class="btn">View</a>
-                            <a href="{{ path('admin_product_edit', {'id': product.id}) }}" class="btn">Edit</a>
-                            <form method="post" action="{{ path('admin_product_delete', {'id': product.id}) }}" onsubmit="return confirm('Delete this product?');" style="display:inline;">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ product.id) }}">
-                                <button type="submit" class="btn btn-danger">Delete</button>
-                            </form>
-                        </div>
+                    <div class="actions">
+                        <a href="{{ path('admin_product_show', {'id': product.id}) }}" class="btn">View</a>
+                        <a href="{{ path('admin_product_edit', {'id': product.id}) }}" class="btn">Edit</a>
+                        <form method="post" action="{{ path('admin_product_delete', {'id': product.id}) }}" onsubmit="return confirm('Delete this product?');" style="display:inline;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ product.id) }}">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="empty">
-            <p>No products found.</p>
-        </div>
-    {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div id="productsEmpty" class="empty" {% if products is not empty %}style="display:none"{% endif %}>
+        <p>No products found.</p>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+    (function () {
+        let liveTimer = null;
+        let productWs = null;
+        const LIVE_CHECK_MS = 1000;
+        let knownLatestProductId = Number('{{ latestProductId ?? 0 }}') || 0;
+        let knownProductsFingerprint = '{{ productsFingerprint|default("") }}';
+        const websocketUrl = '{{ websocketUrl|default("") }}';
+        const rowJsonUrlTemplate = '{{ path("admin_product_row_json", {id: 0})|replace({"0": "__ID__"}) }}';
+        const cardsJsonUrl = '{{ path("admin_product_cards_json") }}';
+        const realtimeUpdatesUrl = '{{ path("admin_realtime_updates") }}';
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function rowJsonUrl(productId) {
+            return rowJsonUrlTemplate.replace('__ID__', String(productId));
+        }
+
+        function highlightCard(node) {
+            if (!node) {
+                return;
+            }
+            node.classList.add('product-live-highlight');
+            window.setTimeout(function () {
+                node.classList.remove('product-live-highlight');
+            }, 2300);
+        }
+
+        function buildCardHtml(card) {
+            const imageHtml = card.imageUrl
+                ? '<img src="' + escapeHtml(card.imageUrl) + '" alt="' + escapeHtml(card.name) + '">'
+                : '<div class="placeholder">📦</div>';
+
+            return ''
+                + '<div class="card-thumb">' + imageHtml + '</div>'
+                + '<div class="card-body">'
+                + '<div class="card-title">' + escapeHtml(card.name) + '</div>'
+                + '<div class="meta">'
+                + '<span>Price: $' + escapeHtml(card.price) + '</span>'
+                + '<span>Stock: <strong>' + escapeHtml(card.stock) + '</strong></span>'
+                + '<span>' + escapeHtml(card.categoryName) + '</span>'
+                + '</div>'
+                + '<div class="actions">'
+                + '<a href="' + escapeHtml(card.showUrl) + '" class="btn">View</a>'
+                + '<a href="' + escapeHtml(card.editUrl) + '" class="btn">Edit</a>'
+                + '<form method="post" action="' + escapeHtml(card.deleteUrl) + '" onsubmit="return confirm(\'Delete this product?\');" style="display:inline;">'
+                + '<input type="hidden" name="_token" value="' + escapeHtml(card.deleteToken) + '">'
+                + '<button type="submit" class="btn btn-danger">Delete</button>'
+                + '</form>'
+                + '</div>'
+                + '</div>';
+        }
+
+        function upsertProductCard(card) {
+            const grid = document.getElementById('productsGrid');
+            const empty = document.getElementById('productsEmpty');
+            if (!grid) {
+                return;
+            }
+
+            let node = grid.querySelector('[data-product-id="' + String(card.id) + '"]');
+            if (!node) {
+                node = document.createElement('div');
+                node.className = 'card-item';
+                node.setAttribute('data-product-id', String(card.id));
+                grid.prepend(node);
+            }
+
+            node.innerHTML = buildCardHtml(card);
+            highlightCard(node);
+
+            if (empty) {
+                empty.style.display = grid.children.length ? 'none' : '';
+            }
+        }
+
+        function removeProductCard(productId) {
+            const grid = document.getElementById('productsGrid');
+            const empty = document.getElementById('productsEmpty');
+            if (!grid) {
+                return;
+            }
+            const node = grid.querySelector('[data-product-id="' + String(productId) + '"]');
+            if (node) {
+                node.remove();
+            }
+            if (empty) {
+                empty.style.display = grid.children.length ? 'none' : '';
+            }
+        }
+
+        async function fetchAndUpsertProduct(productId) {
+            if (!productId) {
+                return;
+            }
+            try {
+                const res = await fetch(rowJsonUrl(productId), {
+                    credentials: 'include',
+                    headers: { Accept: 'application/json' },
+                });
+                if (!res.ok) {
+                    return;
+                }
+                const payload = await res.json();
+                if (payload?.success && payload?.data) {
+                    upsertProductCard(payload.data);
+                }
+            } catch (e) {
+                // silent fallback
+            }
+        }
+
+        async function syncAllProductCards() {
+            try {
+                const res = await fetch(cardsJsonUrl, {
+                    credentials: 'include',
+                    headers: { Accept: 'application/json' },
+                });
+                if (!res.ok) {
+                    return;
+                }
+                const payload = await res.json();
+                const data = payload?.data;
+                if (!payload?.success || !data) {
+                    return;
+                }
+                knownProductsFingerprint = data.fingerprint || knownProductsFingerprint;
+                const grid = document.getElementById('productsGrid');
+                if (!grid) {
+                    return;
+                }
+                const seen = new Set();
+                (data.cards || []).forEach(function (card) {
+                    seen.add(Number(card.id));
+                    upsertProductCard(card);
+                });
+                Array.from(grid.querySelectorAll('[data-product-id]')).forEach(function (node) {
+                    const id = Number(node.getAttribute('data-product-id'));
+                    if (!seen.has(id)) {
+                        node.remove();
+                    }
+                });
+                const empty = document.getElementById('productsEmpty');
+                if (empty) {
+                    empty.style.display = grid.children.length ? 'none' : '';
+                }
+            } catch (e) {
+                // silent fallback
+            }
+        }
+
+        async function syncMissingProducts(latestId) {
+            if (!latestId || latestId <= knownLatestProductId) {
+                return;
+            }
+            for (let id = knownLatestProductId + 1; id <= latestId; id += 1) {
+                await fetchAndUpsertProduct(id);
+            }
+            knownLatestProductId = latestId;
+        }
+
+        async function handleRealtimeEvent(event) {
+            const type = event?.type;
+            const productId = Number(event?.payload?.productId || 0);
+
+            if (type === 'product.deleted' && productId) {
+                removeProductCard(productId);
+                return;
+            }
+
+            if (type === 'product.created' || type === 'product.updated') {
+                if (productId) {
+                    await fetchAndUpsertProduct(productId);
+                    knownLatestProductId = Math.max(knownLatestProductId, productId);
+                    return;
+                }
+                await syncAllProductCards();
+            }
+        }
+
+        async function pollLiveUpdates() {
+            try {
+                const res = await fetch(realtimeUpdatesUrl, {
+                    credentials: 'include',
+                    headers: { Accept: 'application/json' },
+                });
+                if (!res.ok) {
+                    return;
+                }
+                const payload = await res.json();
+                const data = payload?.data || {};
+                const serverFingerprint = String(data.productsFingerprint || '');
+                const serverLatestProductId = Number(data.latestProductId || 0);
+
+                if (serverFingerprint && serverFingerprint !== knownProductsFingerprint) {
+                    knownProductsFingerprint = serverFingerprint;
+                    await syncAllProductCards();
+                } else {
+                    await syncMissingProducts(serverLatestProductId);
+                }
+                knownLatestProductId = Math.max(knownLatestProductId, serverLatestProductId);
+            } catch (e) {
+                // silent fallback
+            }
+        }
+
+        function teardownLiveProductUpdates() {
+            if (liveTimer) {
+                clearInterval(liveTimer);
+                liveTimer = null;
+            }
+            if (productWs) {
+                productWs.close();
+                productWs = null;
+            }
+        }
+
+        function initLiveProducts() {
+            const grid = document.getElementById('productsGrid');
+            if (!grid) {
+                return;
+            }
+
+            teardownLiveProductUpdates();
+
+            liveTimer = setInterval(function () {
+                if (!document.hidden) {
+                    pollLiveUpdates();
+                }
+            }, LIVE_CHECK_MS);
+
+            if (websocketUrl) {
+                try {
+                    productWs = new WebSocket(websocketUrl);
+                    productWs.onmessage = function (message) {
+                        try {
+                            const event = JSON.parse(message.data || '{}');
+                            handleRealtimeEvent(event);
+                        } catch (e) {
+                            // ignore malformed payloads
+                        }
+                    };
+                } catch (e) {
+                    // polling fallback remains active
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initLiveProducts);
+        document.addEventListener('turbo:load', initLiveProducts);
+        document.addEventListener('turbo:before-cache', teardownLiveProductUpdates);
+    })();
+    </script>
 {% endblock %}
