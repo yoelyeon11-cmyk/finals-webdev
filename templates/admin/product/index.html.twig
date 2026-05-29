@@ -2,33 +2,6 @@
 
 {% block title %}Products{% endblock %}
 
-{% block stylesheets %}
-    {{ parent() }}
-    <style>
-        .card-body .meta {
-            display: block !important;
-        }
-        .card-body .meta span {
-            display: block;
-            margin-bottom: 10px;
-            line-height: 1.5;
-            font-weight: 500;
-        }
-        .card-body .meta span strong {
-            color: #df9152;
-            font-weight: 700;
-            font-size: 1.1em;
-        }
-        .card-item.product-live-highlight {
-            animation: productLiveHighlight 2.2s ease;
-        }
-        @keyframes productLiveHighlight {
-            0% { box-shadow: 0 0 0 3px #fff3cd; }
-            100% { box-shadow: none; }
-        }
-    </style>
-{% endblock %}
-
 {% block body %}
     <div class="header">
         <h2>Products</h2>
@@ -37,7 +10,7 @@
 
     <div id="productsGrid" class="cards-grid">
         {% for product in products %}
-            <div class="card-item" data-product-id="{{ product.id }}">
+            <div class="card-item product-card" data-product-id="{{ product.id }}">
                 <div class="card-thumb">
                     {% if product.image %}
                         <img src="{{ product_image_url(product.image) }}" alt="{{ product.name }}">
@@ -47,11 +20,33 @@
                 </div>
                 <div class="card-body">
                     <div class="card-title">{{ product.name }}</div>
-                    <div class="meta">
-                        <span>Category: <strong>{{ product.category ? product.category.name : 'No Category' }}</strong></span>
-                        <span>Stock: <strong>{{ product.stock ?? 0 }}</strong></span>
-                        <span>Price: ₱{{ product.price|number_format(2) }}</span>
-                    </div>
+                    <dl class="product-meta">
+                        <div class="product-meta-row">
+                            <dt>Category</dt>
+                            <dd>{{ product.category ? product.category.name : 'No Category' }}</dd>
+                        </div>
+                        <div class="product-meta-row">
+                            <dt>Stock</dt>
+                            <dd class="stock-value">{{ product.stock ?? 0 }}</dd>
+                        </div>
+                        <div class="product-meta-row">
+                            <dt>Status</dt>
+                            <dd>
+                                {% set stock = product.stock ?? 0 %}
+                                {% if stock > 20 %}
+                                    <span class="stock-badge in-stock">In Stock</span>
+                                {% elseif stock > 0 %}
+                                    <span class="stock-badge low-stock">Low Stock</span>
+                                {% else %}
+                                    <span class="stock-badge out-of-stock">Out of Stock</span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="product-meta-row">
+                            <dt>Price</dt>
+                            <dd>₱{{ product.price|number_format(2) }}</dd>
+                        </div>
+                    </dl>
                     <div class="actions">
                         <a href="{{ path('admin_product_show', {'id': product.id}) }}" class="btn">View</a>
                         <a href="{{ path('admin_product_edit', {'id': product.id}) }}" class="btn">Edit</a>
@@ -100,6 +95,17 @@
             return rowJsonUrlTemplate.replace('__ID__', String(productId));
         }
 
+        function stockBadgeHtml(stock) {
+            const value = Number(stock || 0);
+            if (value > 20) {
+                return '<span class="stock-badge in-stock">In Stock</span>';
+            }
+            if (value > 0) {
+                return '<span class="stock-badge low-stock">Low Stock</span>';
+            }
+            return '<span class="stock-badge out-of-stock">Out of Stock</span>';
+        }
+
         function highlightCard(node) {
             if (!node) {
                 return;
@@ -111,6 +117,7 @@
         }
 
         function buildCardHtml(card) {
+            const stock = Number(card.stock || 0);
             const imageHtml = card.imageUrl
                 ? '<img src="' + escapeHtml(card.imageUrl) + '" alt="' + escapeHtml(card.name) + '">'
                 : '<div class="placeholder">📦</div>';
@@ -119,11 +126,12 @@
                 + '<div class="card-thumb">' + imageHtml + '</div>'
                 + '<div class="card-body">'
                 + '<div class="card-title">' + escapeHtml(card.name) + '</div>'
-                + '<div class="meta">'
-                + '<span>Category: <strong>' + escapeHtml(card.categoryName) + '</strong></span>'
-                + '<span>Stock: <strong>' + escapeHtml(card.stock) + '</strong></span>'
-                + '<span>Price: ₱' + escapeHtml(card.price) + '</span>'
-                + '</div>'
+                + '<dl class="product-meta">'
+                + '<div class="product-meta-row"><dt>Category</dt><dd>' + escapeHtml(card.categoryName) + '</dd></div>'
+                + '<div class="product-meta-row"><dt>Stock</dt><dd class="stock-value">' + escapeHtml(stock) + '</dd></div>'
+                + '<div class="product-meta-row"><dt>Status</dt><dd>' + stockBadgeHtml(stock) + '</dd></div>'
+                + '<div class="product-meta-row"><dt>Price</dt><dd>₱' + escapeHtml(card.price) + '</dd></div>'
+                + '</dl>'
                 + '<div class="actions">'
                 + '<a href="' + escapeHtml(card.showUrl) + '" class="btn">View</a>'
                 + '<a href="' + escapeHtml(card.editUrl) + '" class="btn">Edit</a>'
@@ -145,7 +153,7 @@
             let node = grid.querySelector('[data-product-id="' + String(card.id) + '"]');
             if (!node) {
                 node = document.createElement('div');
-                node.className = 'card-item';
+                node.className = 'card-item product-card';
                 node.setAttribute('data-product-id', String(card.id));
                 grid.prepend(node);
             }
