@@ -43,6 +43,15 @@
             background: var(--light);
         }
 
+        table.dataTable tbody tr.order-live-highlight {
+            animation: orderLiveHighlight 2.2s ease;
+        }
+
+        @keyframes orderLiveHighlight {
+            0% { background-color: #fff3cd; }
+            100% { background-color: transparent; }
+        }
+
         table.dataTable tbody td {
             padding: 1.2rem 1.5rem;
             color: #666;
@@ -137,7 +146,7 @@
         </thead>
         <tbody>
             {% for order in orders %}
-            <tr>
+            <tr data-order-id="{{ order.id }}">
                 <td><strong>{{ order.transactionId }}</strong></td>
                 <td>
                     <strong>{{ order.customerName }}</strong><br>
@@ -175,9 +184,62 @@
     <script>
     (function () {
         let liveTimer = null;
+        let orderWs = null;
         const LIVE_CHECK_MS = 1000;
         let knownLatestOrderId = Number('{{ latestOrderId ?? 0 }}') || 0;
         const websocketUrl = '{{ websocketUrl|default("") }}';
+        const rowJsonUrlTemplate = '{{ path("admin_order_row_json", {id: 0})|replace({"0": "__ID__"}) }}';
+        const viewIconSvg = '<svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path></svg>';
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function rowJsonUrl(orderId) {
+            return rowJsonUrlTemplate.replace('__ID__', String(orderId));
+        }
+
+        function buildRowData(order) {
+            let statusCell = '<span class="badge ' + escapeHtml(order.statusBadgeClass) + '">' + escapeHtml(order.statusLabel) + '</span>';
+            if (order.status === 'shipping' && order.trackingNumber) {
+                statusCell += '<br><small title="Tracking: ' + escapeHtml(order.trackingNumber) + '">Tracking available</small>';
+            }
+
+            return [
+                '<strong>' + escapeHtml(order.transactionId) + '</strong>',
+                '<strong>' + escapeHtml(order.customerName) + '</strong><br><small>' + escapeHtml(order.customerEmail) + '</small>',
+                escapeHtml(order.itemsDescription),
+                '<strong style="color: var(--secondary); font-size: 16px;">$' + escapeHtml(order.totalAmount) + '</strong>',
+                statusCell,
+                escapeHtml(order.orderDate),
+                '<a href="' + escapeHtml(order.showUrl) + '" class="btn-action" title="View & Process">' + viewIconSvg + '</a>',
+            ];
+        }
+
+        function highlightRow(node) {
+            if (!node) {
+                return;
+            }
+            node.classList.add('order-live-highlight');
+            window.setTimeout(function () {
+                node.classList.remove('order-live-highlight');
+            }, 2300);
+        }
+
+        function teardownLiveOrderUpdates() {
+            if (liveTimer) {
+                clearInterval(liveTimer);
+                liveTimer = null;
+            }
+            if (orderWs) {
+                orderWs.close();
+                orderWs = null;
+            }
+        }
 
         function initOrderStatusAutoRefresh() {
             if (typeof window.$ === 'undefined') {
@@ -188,22 +250,110 @@
                 return;
             }
 
+            teardownLiveOrderUpdates();
+
             if ($.fn.DataTable.isDataTable('#ordersTable')) {
                 $('#ordersTable').DataTable().destroy();
             }
 
+            const knownOrderIds = new Set();
+            tableEl.find('tbody tr[data-order-id]').each(function () {
+                const id = Number(this.getAttribute('data-order-id'));
+                if (id) {
+                    knownOrderIds.add(id);
+                }
+            });
+
             const table = tableEl.DataTable({
-            responsive: true,
-            order: [[5, 'desc']],
-            pageLength: 25,
-            language: {
-                search: "Search orders:",
-                lengthMenu: "Show _MENU_ orders per page",
-                info: "Showing _START_ to _END_ of _TOTAL_ orders",
-                emptyTable: "No orders found",
-                zeroRecords: "No matching orders found"
+                responsive: true,
+                order: [[5, 'desc']],
+                pageLength: 25,
+                language: {
+                    search: "Search orders:",
+                    lengthMenu: "Show _MENU_ orders per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ orders",
+                    emptyTable: "No orders found",
+                    zeroRecords: "No matching orders found"
+                }
+            });
+
+            function findRowByOrderId(orderId) {
+                let match = null;
+                table.rows().every(function () {
+                    const node = this.node();
+                    if (node && String(node.getAttribute('data-order-id')) === String(orderId)) {
+                        match = this;
+                    }
+                });
+                return match;
             }
-        });
+
+            function upsertOrderRow(order) {
+                const rowData = buildRowData(order);
+                const existing = findRowByOrderId(order.id);
+
+                if (existing) {
+                    existing.data(rowData);
+                    table.order([[5, 'desc']]).draw(false);
+                    highlightRow(existing.node());
+                    return;
+                }
+
+                const added = table.row.add(rowData);
+                const node = added.node();
+                if (node) {
+                    node.setAttribute('data-order-id', String(order.id));
+                    highlightRow(node);
+                }
+                knownOrderIds.add(Number(order.id));
+                table.order([[5, 'desc']]).draw(false);
+            }
+
+            async function fetchAndUpsertOrder(orderId) {
+                if (!orderId) {
+                    return;
+                }
+                try {
+                    const res = await fetch(rowJsonUrl(orderId), {
+                        credentials: 'include',
+                        headers: { Accept: 'application/json' },
+                    });
+                    if (!res.ok) {
+                        return;
+                    }
+                    const payload = await res.json();
+                    if (!payload?.success || !payload?.data) {
+                        return;
+                    }
+                    upsertOrderRow(payload.data);
+                } catch (e) {
+                    // silent fallback: polling will retry
+                }
+            }
+
+            async function syncMissingOrders(latestId) {
+                if (!latestId || latestId <= knownLatestOrderId) {
+                    return;
+                }
+                for (let id = knownLatestOrderId + 1; id <= latestId; id += 1) {
+                    await fetchAndUpsertOrder(id);
+                }
+                knownLatestOrderId = latestId;
+            }
+
+            async function handleRealtimeEvent(event) {
+                const type = event?.type;
+                if (type !== 'order.created' && type !== 'order.status.updated') {
+                    return;
+                }
+                const orderId = Number(event?.payload?.orderId || 0);
+                if (orderId) {
+                    await fetchAndUpsertOrder(orderId);
+                    knownLatestOrderId = Math.max(knownLatestOrderId, orderId);
+                    return;
+                }
+                await pollLiveUpdates();
+            }
 
             async function pollLiveUpdates() {
                 try {
@@ -216,42 +366,13 @@
                     }
                     const payload = await res.json();
                     const serverLatestOrderId = Number(payload?.data?.latestOrderId || 0);
-
-                    if (serverLatestOrderId > knownLatestOrderId) {
-                        const currentSearch = table.search();
-                        const currentPage = table.page();
-                        const state = { search: currentSearch, page: currentPage };
-                        sessionStorage.setItem('adminOrdersTableState', JSON.stringify(state));
-                        window.location.reload();
-                        return;
-                    }
-                    knownLatestOrderId = Math.max(knownLatestOrderId, serverLatestOrderId);
+                    await syncMissingOrders(serverLatestOrderId);
                 } catch (e) {
                     // silent fallback: user can still refresh manually
                 }
             }
 
-            const saved = sessionStorage.getItem('adminOrdersTableState');
-            if (saved) {
-            try {
-                const state = JSON.parse(saved);
-                if (typeof state.search === 'string') {
-                    table.search(state.search).draw();
-                }
-                if (typeof state.page === 'number') {
-                    table.page(state.page).draw('page');
-                }
-            } catch (e) {
-                // ignore parse failures
-            } finally {
-                sessionStorage.removeItem('adminOrdersTableState');
-            }
-        }
-
-            if (liveTimer) {
-                clearInterval(liveTimer);
-            }
-            liveTimer = setInterval(() => {
+            liveTimer = setInterval(function () {
                 if (!document.hidden) {
                     pollLiveUpdates();
                 }
@@ -259,19 +380,11 @@
 
             if (websocketUrl) {
                 try {
-                    const ws = new WebSocket(websocketUrl);
-                    ws.onmessage = function (message) {
+                    orderWs = new WebSocket(websocketUrl);
+                    orderWs.onmessage = function (message) {
                         try {
                             const event = JSON.parse(message.data || '{}');
-                            if (event?.type === 'order.created' || event?.type === 'order.status.updated') {
-                                const currentSearch = table.search();
-                                const currentPage = table.page();
-                                sessionStorage.setItem(
-                                    'adminOrdersTableState',
-                                    JSON.stringify({ search: currentSearch, page: currentPage }),
-                                );
-                                window.location.reload();
-                            }
+                            handleRealtimeEvent(event);
                         } catch (e) {
                             // ignore malformed websocket payloads
                         }
@@ -284,6 +397,7 @@
 
         document.addEventListener('DOMContentLoaded', initOrderStatusAutoRefresh);
         document.addEventListener('turbo:load', initOrderStatusAutoRefresh);
+        document.addEventListener('turbo:before-cache', teardownLiveOrderUpdates);
     })();
     </script>
 {% endblock %}

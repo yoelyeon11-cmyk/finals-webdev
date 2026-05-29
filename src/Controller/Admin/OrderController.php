@@ -15,6 +15,7 @@ use App\Service\RealtimeBroadcastClient;
 use App\Service\OrderStatusPushNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -171,6 +172,16 @@ class OrderController extends AbstractController
         ]);
     }
 
+    #[Route('/row/{id}', name: 'admin_order_row_json', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function rowJson(Order $order): JsonResponse
+    {
+        return $this->json([
+            'success' => true,
+            'data' => $this->serializeAdminOrderRow($order),
+            'error' => null,
+        ]);
+    }
+
     #[Route('/{id}', name: 'admin_order_show')]
     public function show(Order $order): Response
     {
@@ -264,5 +275,27 @@ class OrderController extends AbstractController
         $logger->log('Order Status Updated', 'Updated order ' . $order->getTransactionId() . ' status from "' . $oldStatus . '" to "' . $order->getStatus() . '"');
         $this->addFlash('success', 'Order status updated to: ' . $order->getStatusLabel());
         return $this->redirectToRoute('admin_order_show', ['id' => $order->getId()]);
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeAdminOrderRow(Order $order): array
+    {
+        $items = (string) ($order->getItemsDescription() ?? '');
+        $itemsShort = mb_strlen($items) > 50 ? mb_substr($items, 0, 50).'...' : $items;
+
+        return [
+            'id' => $order->getId(),
+            'transactionId' => $order->getTransactionId(),
+            'customerName' => $order->getCustomerName(),
+            'customerEmail' => $order->getCustomerEmail(),
+            'itemsDescription' => $itemsShort,
+            'totalAmount' => $order->getTotalAmount(),
+            'status' => $order->getStatus(),
+            'statusLabel' => $order->getStatusLabel(),
+            'statusBadgeClass' => $order->getStatusBadgeClass(),
+            'trackingNumber' => $order->getTrackingNumber(),
+            'orderDate' => $order->getOrderDate()?->format('M d, Y'),
+            'showUrl' => $this->generateUrl('admin_order_show', ['id' => $order->getId()]),
+        ];
     }
 }
