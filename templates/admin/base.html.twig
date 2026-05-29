@@ -134,21 +134,6 @@
 
     {% block javascripts %}
     <script>
-        // Session validation on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is still authenticated
-            fetch('{{ path("admin_dashboard") }}', { credentials: 'include' })
-                .then(response => {
-                    // If not authenticated, redirect to login
-                    if (response.status === 401 || response.status === 403) {
-                        window.location.href = '{{ path("app_login") }}';
-                    }
-                })
-                .catch(() => {
-                    // On network error, still allow page to load
-                });
-        });
-
         // Console debug logging from flash messages
         {% for message in app.flashes('console_debug') %}
             console.log('{{ message|raw }}');
