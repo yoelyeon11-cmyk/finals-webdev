@@ -89,22 +89,22 @@
 <div class="stats-grid">
     <div class="stat-card">
         <h3>Total Products</h3>
-        <div class="number">{{ stats.totalProducts }}</div>
+        <div class="number" id="statTotalProducts">{{ stats.totalProducts }}</div>
         <div class="change"></div>
     </div>
     <div class="stat-card">
         <h3>Categories</h3>
-        <div class="number">{{ stats.totalCategories }}</div>
+        <div class="number" id="statTotalCategories">{{ stats.totalCategories }}</div>
         <div class="change"></div>
     </div>
     <div class="stat-card">
         <h3>Low Stock Items</h3>
-        <div class="number">{{ stats.lowStockCount }}</div>
+        <div class="number" id="statLowStockCount">{{ stats.lowStockCount }}</div>
         <div class="change" style="color: #dc3545;"></div>
     </div>
     <div class="stat-card">
         <h3>Total Value</h3>
-        <div class="number">₱{{ stats.totalValue|number_format(0, '.', ',') }}</div>
+        <div class="number" id="statTotalValue">₱{{ stats.totalValue|number_format(0, '.', ',') }}</div>
         <div class="change"></div>
     </div>
 </div>
@@ -125,7 +125,7 @@
         </thead>
         <tbody>
             {% for product in recentProducts %}
-            <tr>
+            <tr data-product-id="{{ product.id }}">
                 <td>{{ product.name }}</td>
                 <td>{{ product.category ? product.category.name : 'No Category' }}</td>    
                 <td data-order="{{ product.stock }}">{{ product.stock }}</td>
@@ -152,11 +152,168 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script>
-        $(document).ready(function() {
-            $('#productsTable').DataTable({
+    (function () {
+        let liveTimer = null;
+        let dashboardWs = null;
+        let dashboardTable = null;
+        const LIVE_CHECK_MS = 1000;
+        let knownProductsFingerprint = '{{ productsFingerprint|default("") }}';
+        let knownLatestProductId = Number('{{ latestProductId ?? 0 }}') || 0;
+        const websocketUrl = '{{ websocketUrl|default("") }}';
+        const statsJsonUrl = '{{ path("admin_dashboard_stats_json") }}';
+        const realtimeUpdatesUrl = '{{ path("admin_realtime_updates") }}';
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function stockBadge(stock) {
+            if (stock > 20) {
+                return '<span class="badge badge-success">In Stock</span>';
+            }
+            if (stock > 0) {
+                return '<span class="badge badge-warning">Low Stock</span>';
+            }
+            return '<span class="badge badge-danger">Out of Stock</span>';
+        }
+
+        function stockOrder(stock) {
+            if (stock > 20) {
+                return 3;
+            }
+            if (stock > 0) {
+                return 2;
+            }
+            return 1;
+        }
+
+        function applyDashboardData(data) {
+            const stats = data?.stats || {};
+            const totalProductsEl = document.getElementById('statTotalProducts');
+            const totalCategoriesEl = document.getElementById('statTotalCategories');
+            const lowStockEl = document.getElementById('statLowStockCount');
+            const totalValueEl = document.getElementById('statTotalValue');
+
+            if (totalProductsEl) {
+                totalProductsEl.textContent = String(stats.totalProducts ?? 0);
+            }
+            if (totalCategoriesEl) {
+                totalCategoriesEl.textContent = String(stats.totalCategories ?? 0);
+            }
+            if (lowStockEl) {
+                lowStockEl.textContent = String(stats.lowStockCount ?? 0);
+            }
+            if (totalValueEl) {
+                const value = Number(stats.totalValue || 0);
+                totalValueEl.textContent = '₱' + value.toLocaleString('en-PH', { maximumFractionDigits: 0 });
+            }
+
+            if (!dashboardTable) {
+                return;
+            }
+
+            dashboardTable.clear();
+            (data.recentProducts || []).forEach(function (product) {
+                const stock = Number(product.stock || 0);
+                const price = Number(product.price || 0);
+                dashboardTable.row.add([
+                    escapeHtml(product.name),
+                    escapeHtml(product.categoryName),
+                    String(stock),
+                    '₱' + price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                    stockBadge(stock),
+                ]);
+            });
+            dashboardTable.draw(false);
+        }
+
+        async function refreshDashboardFromServer() {
+            try {
+                const res = await fetch(statsJsonUrl, {
+                    credentials: 'include',
+                    headers: { Accept: 'application/json' },
+                });
+                if (!res.ok) {
+                    return;
+                }
+                const payload = await res.json();
+                if (!payload?.success || !payload?.data) {
+                    return;
+                }
+                knownProductsFingerprint = payload.data.productsFingerprint || knownProductsFingerprint;
+                knownLatestProductId = Math.max(knownLatestProductId, Number(payload.data.latestProductId || 0));
+                applyDashboardData(payload.data);
+            } catch (e) {
+                // silent fallback
+            }
+        }
+
+        async function pollLiveUpdates() {
+            try {
+                const res = await fetch(realtimeUpdatesUrl, {
+                    credentials: 'include',
+                    headers: { Accept: 'application/json' },
+                });
+                if (!res.ok) {
+                    return;
+                }
+                const payload = await res.json();
+                const data = payload?.data || {};
+                const serverFingerprint = String(data.productsFingerprint || '');
+                const serverLatestProductId = Number(data.latestProductId || 0);
+
+                if (
+                    (serverFingerprint && serverFingerprint !== knownProductsFingerprint)
+                    || serverLatestProductId > knownLatestProductId
+                ) {
+                    await refreshDashboardFromServer();
+                }
+            } catch (e) {
+                // silent fallback
+            }
+        }
+
+        async function handleRealtimeEvent(event) {
+            const type = event?.type || '';
+            if (
+                type === 'product.created'
+                || type === 'product.updated'
+                || type === 'product.deleted'
+            ) {
+                await refreshDashboardFromServer();
+            }
+        }
+
+        function teardownLiveDashboard() {
+            if (liveTimer) {
+                clearInterval(liveTimer);
+                liveTimer = null;
+            }
+            if (dashboardWs) {
+                dashboardWs.close();
+                dashboardWs = null;
+            }
+        }
+
+        function initDashboardLive() {
+            if (typeof window.$ === 'undefined' || !document.getElementById('productsTable')) {
+                return;
+            }
+
+            teardownLiveDashboard();
+
+            if ($.fn.DataTable.isDataTable('#productsTable')) {
+                $('#productsTable').DataTable().destroy();
+            }
+
+            dashboardTable = $('#productsTable').DataTable({
                 responsive: true,
                 pageLength: 25,
-                order: [[0, 'asc']], // Sort by Product Name by default
+                order: [[0, 'asc']],
                 language: {
                     search: "Search products:",
                     lengthMenu: "Show _MENU_ products per page",
@@ -164,15 +321,37 @@
                     infoEmpty: "No products available",
                     emptyTable: "No products found in the database",
                     zeroRecords: "No matching products found",
-                    infoFiltered: "(filtered from _MAX_ total products)",
-                    paginate: {
-                        first: "First",
-                        last: "Last",
-                        next: "Next",
-                        previous: "Previous"
-                    }
-                }
+                },
             });
-        });
+
+            pollLiveUpdates();
+
+            liveTimer = setInterval(function () {
+                if (!document.hidden) {
+                    pollLiveUpdates();
+                }
+            }, LIVE_CHECK_MS);
+
+            if (websocketUrl) {
+                try {
+                    dashboardWs = new WebSocket(websocketUrl);
+                    dashboardWs.onmessage = function (message) {
+                        try {
+                            const event = JSON.parse(message.data || '{}');
+                            handleRealtimeEvent(event);
+                        } catch (e) {
+                            // ignore malformed payloads
+                        }
+                    };
+                } catch (e) {
+                    // polling fallback remains active
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initDashboardLive);
+        document.addEventListener('turbo:load', initDashboardLive);
+        document.addEventListener('turbo:before-cache', teardownLiveDashboard);
+    })();
     </script>
 {% endblock %}

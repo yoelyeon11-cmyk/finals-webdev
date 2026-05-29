@@ -303,6 +303,8 @@
 
             teardownLiveProductUpdates();
 
+            pollLiveUpdates();
+
             liveTimer = setInterval(function () {
                 if (!document.hidden) {
                     pollLiveUpdates();
