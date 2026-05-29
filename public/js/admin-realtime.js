@@ -158,6 +158,19 @@
         }, 2200);
     }
 
+    function rowCellsToNode(cells) {
+        if (!Array.isArray(cells)) {
+            return cells;
+        }
+        const tr = document.createElement('tr');
+        cells.forEach(function (cell) {
+            const td = document.createElement('td');
+            td.innerHTML = String(cell ?? '');
+            tr.appendChild(td);
+        });
+        return tr;
+    }
+
     async function syncDataTable(options) {
         const table = options.table;
         const syncUrl = options.syncUrl;
@@ -183,7 +196,7 @@
                 knownFingerprint = data.fingerprint || knownFingerprint;
                 table.clear();
                 (buildRows(data.rows || data.cards || []) || []).forEach(function (row) {
-                    table.row.add(row);
+                    table.row.add(rowCellsToNode(row));
                 });
                 table.draw(false);
             } catch (e) {

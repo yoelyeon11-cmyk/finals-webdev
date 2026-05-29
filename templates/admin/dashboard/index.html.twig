@@ -198,6 +198,41 @@
             return '<span class="badge badge-danger">Out of Stock</span>';
         }
 
+        function buildProductRowNode(product) {
+            const stock = Number(product.stock || 0);
+            const price = Number(product.price || 0);
+            const stockOrder = stock > 20 ? 3 : (stock > 0 ? 2 : 1);
+            const tr = document.createElement('tr');
+            if (product.id) {
+                tr.setAttribute('data-product-id', String(product.id));
+            }
+
+            const nameCell = document.createElement('td');
+            nameCell.textContent = product.name ?? '';
+            tr.appendChild(nameCell);
+
+            const categoryCell = document.createElement('td');
+            categoryCell.textContent = product.categoryName ?? 'No Category';
+            tr.appendChild(categoryCell);
+
+            const stockCell = document.createElement('td');
+            stockCell.setAttribute('data-order', String(stock));
+            stockCell.textContent = String(stock);
+            tr.appendChild(stockCell);
+
+            const priceCell = document.createElement('td');
+            priceCell.setAttribute('data-order', String(price));
+            priceCell.textContent = '₱' + price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            tr.appendChild(priceCell);
+
+            const statusCell = document.createElement('td');
+            statusCell.setAttribute('data-order', String(stockOrder));
+            statusCell.innerHTML = stockBadge(stock);
+            tr.appendChild(statusCell);
+
+            return tr;
+        }
+
         function applyDashboardData(data) {
             const stats = data?.stats || {};
             const totalProductsEl = document.getElementById('statTotalProducts');
@@ -225,15 +260,7 @@
 
             dashboardTable.clear();
             (data.recentProducts || []).forEach(function (product) {
-                const stock = Number(product.stock || 0);
-                const price = Number(product.price || 0);
-                dashboardTable.row.add([
-                    escapeHtml(product.name),
-                    escapeHtml(product.categoryName),
-                    String(stock),
-                    '₱' + price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-                    stockBadge(stock),
-                ]);
+                dashboardTable.row.add(buildProductRowNode(product));
             });
             dashboardTable.draw(false);
         }
