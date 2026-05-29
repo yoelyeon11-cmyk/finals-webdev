@@ -56,10 +56,10 @@ If WS is unavailable, admin pages still poll `/admin/realtime/updates`, and mobi
 
 ## 5) Railway PHP server (required)
 
-The production start command must route all requests through Symfony:
+The production start command must use a router that serves static files and forwards the rest to Symfony:
 
 ```bash
-php -S 0.0.0.0:${PORT} -t public public/index.php
+php -S 0.0.0.0:${PORT} -t public public/router.php
 ```
 
-Without `public/index.php` as the router script, URLs ending in `.json` (for example `/admin/stats.json`) return **404** and live admin updates will not work.
+Do **not** use `public/index.php` alone as the router — that breaks CSS/JS on reload. Without any router, URLs ending in `.json` (for example `/admin/stats.json`) return **404** and live admin updates will not work.
