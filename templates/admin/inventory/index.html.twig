@@ -243,36 +243,46 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#inventoryTable').DataTable({
+            const table = $('#inventoryTable').DataTable({
                 responsive: true,
                 pageLength: 25,
-                order: [[2, 'desc']], // Sort by Last Added (newest first)
+                order: [[2, 'desc']],
                 columnDefs: [
-                    {
-                        targets: 0,
-                        width: '200px'
-                    },
-                    {
-                        targets: 1,
-                        width: '150px'
-                    }
+                    { targets: 0, width: '200px' },
+                    { targets: 1, width: '150px' },
                 ],
                 language: {
                     search: "Search inventory:",
                     lengthMenu: "Show _MENU_ entries per page",
                     info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    infoEmpty: "No inventory entries available",
-                    infoFiltered: "(filtered from _MAX_ total entries)",
                     emptyTable: "No inventory entries found",
                     zeroRecords: "No matching inventory entries found",
-                    paginate: {
-                        first: "First",
-                        last: "Last",
-                        next: "Next",
-                        previous: "Previous"
-                    }
                 }
             });
+
+            if (window.AdminRealtime) {
+                window.AdminRealtime.syncDataTable({
+                    table: table,
+                    syncUrl: '{{ path("admin_realtime_inventory_json") }}',
+                    fingerprintKey: 'inventoryFingerprint',
+                    initialFingerprint: '{{ inventoryFingerprint|default("") }}',
+                    eventTypes: [
+                        'inventory.updated',
+                        'product.updated',
+                        'product.created',
+                        'product.deleted',
+                    ],
+                    buildRows: function (rows) {
+                        return rows.map(function (row) {
+                            return [
+                                window.AdminRealtime.escapeHtml(row.productName) + ' (stock: ' + window.AdminRealtime.escapeHtml(row.currentStock) + ')',
+                                String(row.totalQuantity),
+                                window.AdminRealtime.escapeHtml(row.lastAdded),
+                            ];
+                        });
+                    },
+                });
+            }
         });
     </script>
 {% endblock %}

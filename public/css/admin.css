@@ -180,6 +180,16 @@ body {
     font-family: inherit;
 }
 
+table.dataTable tbody tr.admin-live-highlight,
+.card-item.admin-live-highlight {
+    animation: adminLiveHighlight 2.2s ease;
+}
+
+@keyframes adminLiveHighlight {
+    0% { background-color: #fff3cd; box-shadow: 0 0 0 2px #fff3cd; }
+    100% { background-color: transparent; box-shadow: none; }
+}
+
 .sidebar-nav li.nav-divider {
     height: 1px;
     background: var(--border);

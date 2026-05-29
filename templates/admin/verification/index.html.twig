@@ -90,21 +90,65 @@
         </table>
     </div>
 </div>
+{% endblock %}
 
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script>
-$(document).ready(function() {
-    {% if pendingRequests|length > 0 %}
-    $('#verificationTable').DataTable({
-        "pageLength": 25,
-        "order": [[5, "desc"]],
-        "language": {
-            "emptyTable": "No requests pending verification"
+{% block javascripts %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        const table = $('#verificationTable').DataTable({
+            pageLength: 25,
+            order: [[5, 'desc']],
+            language: { emptyTable: 'No requests pending verification' },
+        });
+
+        if (window.AdminRealtime) {
+            const esc = window.AdminRealtime.escapeHtml;
+            window.AdminRealtime.syncDataTable({
+                table: table,
+                syncUrl: '{{ path("admin_realtime_verification_json") }}',
+                fingerprintKey: 'verificationFingerprint',
+                initialFingerprint: '{{ verificationFingerprint|default("") }}',
+                eventTypes: [
+                    'verification.updated',
+                    'custom_request.created',
+                    'custom_request.updated',
+                ],
+                buildRows: function (rows) {
+                    if (!rows.length) {
+                        return [[
+                            '',
+                            '<span class="text-muted">No requests pending verification</span>',
+                            '', '', '', '', '',
+                        ]];
+                    }
+                    return rows.map(function (row) {
+                        const cost = row.estimatedCost
+                            ? '₱' + esc(Number(row.estimatedCost).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+                            : '<span class="text-muted">Pending quote</span>';
+                        const actions = '<a href="' + esc(row.reviewUrl) + '" class="action-btn edit" title="Review Details">Review</a>'
+                            + ' <form method="post" action="' + esc(row.approveUrl) + '" style="display:inline-block;margin:0;" onsubmit="return confirm(\'Approve this request?\')">'
+                            + '<input type="hidden" name="_token" value="' + esc(row.approveToken) + '">'
+                            + '<button type="submit" class="action-btn" style="background:#28a745;color:white;border:none;cursor:pointer;" title="Approve">✓</button></form>'
+                            + ' <form method="post" action="' + esc(row.rejectUrl) + '" style="display:inline-block;margin:0;" onsubmit="return confirm(\'Reject this request?\')">'
+                            + '<input type="hidden" name="_token" value="' + esc(row.rejectToken) + '">'
+                            + '<button type="submit" class="action-btn delete" style="border:none;cursor:pointer;" title="Reject">✕</button></form>';
+                        return [
+                            String(row.id),
+                            esc(row.customerName),
+                            esc(row.cosplayCharacter),
+                            cost,
+                            '<span class="badge ' + esc(row.statusBadgeClass) + '">' + esc(row.statusLabel) + '</span>',
+                            esc(row.createdAt),
+                            actions,
+                        ];
+                    });
+                },
+            });
         }
     });
-    {% endif %}
-});
-</script>
+    </script>
 {% endblock %}

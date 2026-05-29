@@ -55,7 +55,8 @@ class OrderController extends AbstractController
         CustomCosplayRequestRepository $requestRepo, 
         ProductRepository $productRepo,
         EntityManagerInterface $em,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        RealtimeBroadcastClient $realtimeBroadcast,
     ): Response
     {
         // Handle form submission
@@ -82,6 +83,13 @@ class OrderController extends AbstractController
             $em->persist($order);
             $em->flush();
 
+            $realtimeBroadcast->publish('order.created', [
+                'orderId' => $order->getId(),
+                'transactionId' => $order->getTransactionId(),
+                'customerEmail' => $order->getCustomerEmail(),
+                'status' => $order->getStatus(),
+            ]);
+
             $logger->log('Order Created', 'Created order ' . $order->getTransactionId() . ' for ' . $order->getCustomerName() . ' - ₱' . $order->getTotalAmount());
             $this->addFlash('success', 'Order created successfully! Transaction ID: ' . $order->getTransactionId());
             
@@ -106,8 +114,12 @@ class OrderController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_order_new')]
-    public function new(Request $request, EntityManagerInterface $em, ActivityLogger $logger): Response
-    {
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+        ActivityLogger $logger,
+        RealtimeBroadcastClient $realtimeBroadcast,
+    ): Response {
         $order = new Order();
         $form = $this->createForm(OrderType::class, $order);
         $form->handleRequest($request);
@@ -116,6 +128,13 @@ class OrderController extends AbstractController
             $order->setCreatedBy($this->getUser());
             $em->persist($order);
             $em->flush();
+
+            $realtimeBroadcast->publish('order.created', [
+                'orderId' => $order->getId(),
+                'transactionId' => $order->getTransactionId(),
+                'customerEmail' => $order->getCustomerEmail(),
+                'status' => $order->getStatus(),
+            ]);
 
             $logger->log('Order Created', 'Created order ' . $order->getTransactionId() . ' for ' . $order->getCustomerName() . ' - ₱' . $order->getTotalAmount());
             $this->addFlash('success', 'Order created successfully! Transaction ID: ' . $order->getTransactionId());
@@ -133,7 +152,8 @@ class OrderController extends AbstractController
         Request $request,
         CustomCosplayRequestRepository $requestRepo,
         EntityManagerInterface $em,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        RealtimeBroadcastClient $realtimeBroadcast,
     ): Response {
         $customRequest = $requestRepo->find($requestId);
         
@@ -160,6 +180,17 @@ class OrderController extends AbstractController
             
             $em->persist($order);
             $em->flush();
+
+            $realtimeBroadcast->publish('order.created', [
+                'orderId' => $order->getId(),
+                'transactionId' => $order->getTransactionId(),
+                'customerEmail' => $order->getCustomerEmail(),
+                'status' => $order->getStatus(),
+            ]);
+            $realtimeBroadcast->publish('custom_request.updated', [
+                'requestId' => $customRequest->getId(),
+                'status' => $customRequest->getStatus(),
+            ]);
 
             $logger->log('Order Created from Request', 'Converted custom request ID: ' . $customRequest->getId() . ' to order ' . $order->getTransactionId() . ' - ₱' . $order->getTotalAmount());
             $this->addFlash('success', 'Order created from custom request! Transaction ID: ' . $order->getTransactionId());

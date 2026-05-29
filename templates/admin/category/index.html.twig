@@ -336,43 +336,58 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#categoriesTable').DataTable({
+            const table = $('#categoriesTable').DataTable({
                 responsive: true,
                 pageLength: 15,
-                order: [[1, 'asc']], // Sort by Name alphabetically
+                order: [[1, 'asc']],
                 columnDefs: [
-                    {
-                        targets: 0,
-                        width: '100px'
-                    },
-                    {
-                        targets: 2, // Products column
-                        orderable: true,
-                        width: '300px'
-                    },
-                    {
-                        targets: 3, // Actions column
-                        orderable: false,
-                        searchable: false,
-                        width: '180px'
-                    }
+                    { targets: 0, width: '100px' },
+                    { targets: 2, orderable: true, width: '300px' },
+                    { targets: 3, orderable: false, searchable: false, width: '180px' },
                 ],
                 language: {
                     search: "Search categories:",
                     lengthMenu: "Show _MENU_ categories per page",
                     info: "Showing _START_ to _END_ of _TOTAL_ categories",
-                    infoEmpty: "No categories available",
-                    infoFiltered: "(filtered from _MAX_ total categories)",
                     emptyTable: "No categories found",
                     zeroRecords: "No matching categories found",
-                    paginate: {
-                        first: "First",
-                        last: "Last",
-                        next: "Next",
-                        previous: "Previous"
-                    }
                 }
             });
+
+            if (window.AdminRealtime) {
+                const esc = window.AdminRealtime.escapeHtml;
+                window.AdminRealtime.syncDataTable({
+                    table: table,
+                    syncUrl: '{{ path("admin_realtime_categories_json") }}',
+                    fingerprintKey: 'categoriesFingerprint',
+                    initialFingerprint: '{{ categoriesFingerprint|default("") }}',
+                    eventTypes: ['category.created', 'category.updated', 'category.deleted'],
+                    buildRows: function (rows) {
+                        return rows.map(function (row) {
+                            let productsCell = '<span class="no-products">No products</span>';
+                            if (row.productCount > 0) {
+                                const badges = (row.productNames || []).map(function (name) {
+                                    return '<span class="product-badge">' + esc(name) + '</span>';
+                                }).join('');
+                                productsCell = '<div class="products-list">' + badges + '</div>'
+                                    + '<div class="product-count">(' + esc(row.productCount) + ' product' + (row.productCount > 1 ? 's' : '') + ')</div>';
+                            }
+                            const actions = '<div class="action-buttons">'
+                                + '<a href="' + esc(row.editUrl) + '" class="btn-sm btn-edit">Edit</a>'
+                                + '<form method="post" action="' + esc(row.deleteUrl) + '" style="display: inline;" onsubmit="return confirm(\'Are you sure you want to delete this category?\');">'
+                                + '<input type="hidden" name="_token" value="' + esc(row.deleteToken) + '">'
+                                + '<button type="submit" class="btn-sm btn-delete">Delete</button>'
+                                + '</form></div>';
+                            return [
+                                String(row.id),
+                                esc(row.name),
+                                productsCell,
+                                actions,
+                            ];
+                        });
+                    },
+                });
+            }
         });
     </script>
 {% endblock %}

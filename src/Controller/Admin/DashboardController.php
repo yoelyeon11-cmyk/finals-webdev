@@ -4,7 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Repository\CategoryRepository;
 use App\Repository\ProductsRepository;
-use App\Service\ProductCatalogRealtimeHelper;
+use App\Service\AdminRealtimeHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +16,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class DashboardController extends AbstractController
 {
     public function __construct(
-        private readonly ProductCatalogRealtimeHelper $catalogRealtime,
+        private readonly AdminRealtimeHelper $catalogRealtime,
     ) {
     }
 
@@ -31,7 +31,7 @@ class DashboardController extends AbstractController
             'stats' => $this->buildStats($productRepository, $categoryRepository),
             'recentProducts' => $productRepository->findBy([], ['id' => 'DESC']),
             'latestProductId' => $latestProduct?->getId(),
-            'productsFingerprint' => $this->catalogRealtime->fingerprint($productRepository),
+            'productsFingerprint' => $this->catalogRealtime->productsFingerprint($productRepository),
             'websocketUrl' => $this->catalogRealtime->websocketUrl(),
         ]);
     }
@@ -47,7 +47,7 @@ class DashboardController extends AbstractController
             'success' => true,
             'data' => [
                 'stats' => $this->buildStats($productRepository, $categoryRepository),
-                'productsFingerprint' => $this->catalogRealtime->fingerprint($productRepository),
+                'productsFingerprint' => $this->catalogRealtime->productsFingerprint($productRepository),
                 'latestProductId' => $productRepository->findOneBy([], ['id' => 'DESC'])?->getId(),
                 'recentProducts' => array_map(
                     static fn ($product) => [

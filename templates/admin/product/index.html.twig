@@ -248,7 +248,11 @@
                 return;
             }
 
-            if (type === 'product.created' || type === 'product.updated') {
+            if (
+                type === 'product.created'
+                || type === 'product.updated'
+                || type === 'inventory.updated'
+            ) {
                 if (productId) {
                     await fetchAndUpsertProduct(productId);
                     knownLatestProductId = Math.max(knownLatestProductId, productId);

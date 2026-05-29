@@ -343,7 +343,11 @@
 
             async function handleRealtimeEvent(event) {
                 const type = event?.type;
-                if (type !== 'custom_request.created' && type !== 'custom_request.updated') {
+                if (
+                    type !== 'custom_request.created'
+                    && type !== 'custom_request.updated'
+                    && type !== 'verification.updated'
+                ) {
                     return;
                 }
                 const requestId = Number(event?.payload?.requestId || 0);

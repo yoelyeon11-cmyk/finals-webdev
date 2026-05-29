@@ -344,6 +344,9 @@
             async function handleRealtimeEvent(event) {
                 const type = event?.type;
                 if (type !== 'order.created' && type !== 'order.status.updated') {
+                    if (type === 'inventory.updated' || type === 'product.updated') {
+                        await pollLiveUpdates();
+                    }
                     return;
                 }
                 const orderId = Number(event?.payload?.orderId || 0);

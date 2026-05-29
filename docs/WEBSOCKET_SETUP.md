@@ -46,6 +46,9 @@ In the existing `finals-webdev` Railway web service, set:
 - `order.created`, `order.status.updated`
 - `custom_request.created`, `custom_request.updated`
 - `product.created`, `product.updated`, `product.deleted`
+- `inventory.updated` (stock changes)
+- `category.created`, `category.updated`, `category.deleted`
+- `verification.updated`
 
 ## 4) Fallback
 

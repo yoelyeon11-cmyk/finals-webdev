@@ -5,6 +5,8 @@ namespace App\Controller\Admin;
 use App\Entity\CustomCosplayRequest;
 use App\Repository\CustomCosplayRequestRepository;
 use App\Service\ActivityLogger;
+use App\Service\AdminRealtimeHelper;
+use App\Service\RealtimeBroadcastClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,10 +18,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_STAFF')]
 class VerificationController extends AbstractController
 {
+    public function __construct(
+        private readonly AdminRealtimeHelper $realtime,
+    ) {
+    }
+
     #[Route('/', name: 'admin_verification_index')]
     public function index(CustomCosplayRequestRepository $repository): Response
     {
-        // Get requests that need verification (new, awaiting approval, or quote sent)
         $pendingRequests = $repository->createQueryBuilder('r')
             ->where('r.status IN (:statuses)')
             ->setParameter('statuses', ['new_request', 'awaiting_approval', 'quote_sent'])
@@ -29,6 +35,8 @@ class VerificationController extends AbstractController
 
         return $this->render('admin/verification/index.html.twig', [
             'pendingRequests' => $pendingRequests,
+            'verificationFingerprint' => $this->realtime->verificationFingerprint($repository),
+            'websocketUrl' => $this->realtime->websocketUrl(),
         ]);
     }
 
@@ -45,10 +53,12 @@ class VerificationController extends AbstractController
         Request $request,
         CustomCosplayRequest $customRequest,
         EntityManagerInterface $em,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        RealtimeBroadcastClient $realtimeBroadcast,
     ): Response {
         if (!$this->isCsrfTokenValid('approve_' . $customRequest->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid CSRF token.');
+
             return $this->redirectToRoute('admin_verification_review', ['id' => $customRequest->getId()]);
         }
 
@@ -61,8 +71,17 @@ class VerificationController extends AbstractController
         $customRequest->setUpdatedAt(new \DateTimeImmutable());
         $em->flush();
 
+        $realtimeBroadcast->publish('custom_request.updated', [
+            'requestId' => $customRequest->getId(),
+            'status' => $customRequest->getStatus(),
+        ]);
+        $realtimeBroadcast->publish('verification.updated', [
+            'requestId' => $customRequest->getId(),
+        ]);
+
         $logger->log('Request Approved', 'Approved custom request ID: ' . $customRequest->getId() . ' for ' . $customRequest->getCustomerName() . ' - ₱' . $customRequest->getEstimatedCost());
         $this->addFlash('success', 'Request approved! Customer can now proceed with order.');
+
         return $this->redirectToRoute('admin_verification_index');
     }
 
@@ -71,10 +90,12 @@ class VerificationController extends AbstractController
         Request $request,
         CustomCosplayRequest $customRequest,
         EntityManagerInterface $em,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        RealtimeBroadcastClient $realtimeBroadcast,
     ): Response {
         if (!$this->isCsrfTokenValid('reject_' . $customRequest->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid CSRF token.');
+
             return $this->redirectToRoute('admin_verification_review', ['id' => $customRequest->getId()]);
         }
 
@@ -82,8 +103,17 @@ class VerificationController extends AbstractController
         $customRequest->setUpdatedAt(new \DateTimeImmutable());
         $em->flush();
 
+        $realtimeBroadcast->publish('custom_request.updated', [
+            'requestId' => $customRequest->getId(),
+            'status' => $customRequest->getStatus(),
+        ]);
+        $realtimeBroadcast->publish('verification.updated', [
+            'requestId' => $customRequest->getId(),
+        ]);
+
         $logger->log('Request Rejected', 'Rejected custom request ID: ' . $customRequest->getId() . ' for ' . $customRequest->getCustomerName());
         $this->addFlash('warning', 'Request has been rejected.');
+
         return $this->redirectToRoute('admin_verification_index');
     }
 }

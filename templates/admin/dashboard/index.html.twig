@@ -277,16 +277,23 @@
             }
         }
 
-        async function handleRealtimeEvent(event) {
-            const type = event?.type || '';
-            if (
-                type === 'product.created'
-                || type === 'product.updated'
-                || type === 'product.deleted'
-            ) {
-                await refreshDashboardFromServer();
+            async function handleRealtimeEvent(event) {
+                const type = event?.type || '';
+                if (
+                    type === 'product.created'
+                    || type === 'product.updated'
+                    || type === 'product.deleted'
+                    || type === 'inventory.updated'
+                    || type === 'category.created'
+                    || type === 'category.updated'
+                    || type === 'category.deleted'
+                    || type === 'order.created'
+                    || type === 'custom_request.created'
+                    || type === 'verification.updated'
+                ) {
+                    await refreshDashboardFromServer();
+                }
             }
-        }
 
         function teardownLiveDashboard() {
             if (liveTimer) {

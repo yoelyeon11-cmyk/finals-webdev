@@ -5,7 +5,10 @@ namespace App\Controller\Admin;
 use App\Entity\Inventory;
 use App\Form\InventoryType;
 use App\Repository\InventoryRepository;
+use App\Repository\ProductsRepository;
 use App\Service\ActivityLogger;
+use App\Service\AdminRealtimeHelper;
+use App\Service\RealtimeBroadcastClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,8 +20,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_STAFF')]
 class InventoryController extends AbstractController
 {
+    public function __construct(
+        private readonly AdminRealtimeHelper $realtime,
+    ) {
+    }
+
     #[Route('/', name: 'admin_inventory_index', methods: ['GET'])]
-    public function index(InventoryRepository $inventoryRepository): Response
+    public function index(InventoryRepository $inventoryRepository, ProductsRepository $productsRepository): Response
     {
         // Get all inventory entries grouped by product
         $entries = $inventoryRepository->findBy([], ['id' => 'DESC']);
@@ -48,12 +56,18 @@ class InventoryController extends AbstractController
         
         return $this->render('admin/inventory/index.html.twig', [
             'entries' => $groupedEntries,
+            'inventoryFingerprint' => $this->realtime->inventoryFingerprint($inventoryRepository, $productsRepository),
+            'websocketUrl' => $this->realtime->websocketUrl(),
         ]);
     }
 
     #[Route('/add', name: 'admin_inventory_add', methods: ['GET', 'POST'])]
-    public function add(Request $request, EntityManagerInterface $entityManager, ActivityLogger $logger): Response
-    {
+    public function add(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        ActivityLogger $logger,
+        RealtimeBroadcastClient $realtimeBroadcast,
+    ): Response {
         $inventory = new Inventory();
         $form = $this->createForm(InventoryType::class, $inventory);
         $form->handleRequest($request);
@@ -66,6 +80,15 @@ class InventoryController extends AbstractController
             // Persist inventory record
             $entityManager->persist($inventory);
             $entityManager->flush();
+
+            $realtimeBroadcast->publish('inventory.updated', [
+                'productId' => $product->getId(),
+                'stock' => $product->getStock(),
+            ]);
+            $realtimeBroadcast->publish('product.updated', [
+                'productId' => $product->getId(),
+                'name' => $product->getName(),
+            ]);
 
             $logger->log('Inventory Stock Added', 'Added ' . $inventory->getQuantity() . ' units to ' . $product->getName());
             $this->addFlash('success', 'Stock added successfully!');

@@ -6,7 +6,7 @@ use App\Entity\Products;
 use App\Form\ProductsType;
 use App\Repository\ProductsRepository;
 use App\Service\ActivityLogger;
-use App\Service\ProductCatalogRealtimeHelper;
+use App\Service\AdminRealtimeHelper;
 use App\Service\RealtimeBroadcastClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,7 +22,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class ProductsController extends AbstractController
 {
     public function __construct(
-        private readonly ProductCatalogRealtimeHelper $catalogRealtime,
+        private readonly AdminRealtimeHelper $catalogRealtime,
     ) {
     }
 
@@ -35,7 +35,7 @@ final class ProductsController extends AbstractController
         return $this->render('admin/product/index.html.twig', [
             'products' => $products,
             'latestProductId' => $latestProduct?->getId(),
-            'productsFingerprint' => $this->catalogRealtime->fingerprint($productsRepository),
+            'productsFingerprint' => $this->catalogRealtime->productsFingerprint($productsRepository),
             'websocketUrl' => $this->catalogRealtime->websocketUrl(),
         ]);
     }
