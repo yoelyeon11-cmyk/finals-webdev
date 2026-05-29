@@ -35,6 +35,8 @@ class ProductController extends AbstractController
                 ),
             ],
             'error' => null,
+        ], 200, [
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 
@@ -45,6 +47,8 @@ class ProductController extends AbstractController
             'success' => true,
             'data' => $this->realtime->serializeAdminProductCard($product, $request),
             'error' => null,
+        ], 200, [
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 }

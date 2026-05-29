@@ -159,7 +159,6 @@
         let refreshInFlight = false;
         let knownDashboardFingerprint = '{{ dashboardFingerprint|default("") }}';
         const statsJsonUrl = '{{ path("admin_dashboard_stats_json") }}';
-        const realtimeUpdatesUrl = '{{ path("admin_realtime_updates") }}';
         const DASHBOARD_EVENT_TYPES = [
             'product.created',
             'product.updated',
@@ -273,9 +272,12 @@
             }
         }
 
-        async function pollDashboardFingerprint() {
+        async function pollDashboardFromServer() {
+            if (refreshInFlight) {
+                return;
+            }
             try {
-                const res = await fetch(realtimeUpdatesUrl, {
+                const res = await fetch(statsJsonUrl, {
                     credentials: 'include',
                     headers: { Accept: 'application/json' },
                     cache: 'no-store',
@@ -284,9 +286,20 @@
                     return;
                 }
                 const payload = await res.json();
-                const serverFingerprint = String(payload?.data?.dashboardFingerprint || '');
+                if (!payload?.success || !payload?.data) {
+                    return;
+                }
+                const serverFingerprint = String(payload.data.dashboardFingerprint || '');
                 if (serverFingerprint && serverFingerprint !== knownDashboardFingerprint) {
-                    await refreshDashboardFromServer();
+                    knownDashboardFingerprint = serverFingerprint;
+                    if (window.AdminRealtime?.seedFingerprints) {
+                        window.AdminRealtime.seedFingerprints({
+                            dashboardFingerprint: knownDashboardFingerprint,
+                            productsFingerprint: payload.data.productsFingerprint,
+                            categoriesFingerprint: payload.data.categoriesFingerprint,
+                        });
+                    }
+                    applyDashboardData(payload.data);
                 }
             } catch (e) {
                 // silent fallback
@@ -356,10 +369,10 @@
                 handleRealtimeEvent(event.detail);
             });
 
-            pollDashboardFingerprint();
+            pollDashboardFromServer();
             pollTimer = setInterval(function () {
                 if (!document.hidden) {
-                    pollDashboardFingerprint();
+                    pollDashboardFromServer();
                 }
             }, 1000);
         }

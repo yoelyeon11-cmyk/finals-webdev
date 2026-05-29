@@ -77,11 +77,12 @@
         });
     }
 
-    async function pollUpdates(updatesUrl) {
+            async function pollUpdates(updatesUrl) {
         try {
             const res = await fetch(updatesUrl, {
                 credentials: 'include',
                 headers: { Accept: 'application/json' },
+                cache: 'no-store',
             });
             if (!res.ok) {
                 return;

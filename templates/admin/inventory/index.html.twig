@@ -219,6 +219,7 @@
             <thead>
                 <tr>
                     <th>Product</th>
+                    <th>Current Stock</th>
                     <th>Total Stock Added</th>
                     <th>Last Added</th>
                 </tr>
@@ -227,6 +228,7 @@
             {% for entry in entries %}
                 <tr>
                     <td>{{ entry.product.name }}</td>
+                    <td data-order="{{ entry.product.stock ?? 0 }}">{{ entry.product.stock ?? 0 }}</td>
                     <td data-order="{{ entry.totalQuantity }}">{{ entry.totalQuantity }}</td>
                     <td data-order="{{ entry.lastAdded|date('U') }}">{{ entry.lastAdded|date('Y-m-d H:i') }}</td>
                 </tr>
@@ -246,10 +248,11 @@
             const table = $('#inventoryTable').DataTable({
                 responsive: true,
                 pageLength: 25,
-                order: [[2, 'desc']],
+                order: [[3, 'desc']],
                 columnDefs: [
                     { targets: 0, width: '200px' },
-                    { targets: 1, width: '150px' },
+                    { targets: 1, width: '120px' },
+                    { targets: 2, width: '150px' },
                 ],
                 language: {
                     search: "Search inventory:",
@@ -275,7 +278,8 @@
                     buildRows: function (rows) {
                         return rows.map(function (row) {
                             return [
-                                window.AdminRealtime.escapeHtml(row.productName) + ' (stock: ' + window.AdminRealtime.escapeHtml(row.currentStock) + ')',
+                                window.AdminRealtime.escapeHtml(row.productName),
+                                String(row.currentStock),
                                 String(row.totalQuantity),
                                 window.AdminRealtime.escapeHtml(row.lastAdded),
                             ];
