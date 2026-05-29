@@ -64,7 +64,7 @@ RUN composer install \
     --optimize-autoloader \
     --classmap-authoritative \
     && php bin/console assets:install public --env=prod --no-interaction \
-    && mkdir -p var/cache var/log config/jwt public/uploads/products public/uploads/profiles \
+    && mkdir -p var/cache var/log var/sessions config/jwt public/uploads/products public/uploads/profiles \
     && chmod -R 775 var config/jwt public/uploads
 
 EXPOSE 8080

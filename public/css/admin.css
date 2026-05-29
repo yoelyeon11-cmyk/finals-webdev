@@ -170,6 +170,16 @@ body {
     flex-shrink: 0;
 }
 
+.nav-logout-form {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.nav-item-button {
+    font-family: inherit;
+}
+
 .sidebar-nav li.nav-divider {
     height: 1px;
     background: var(--border);

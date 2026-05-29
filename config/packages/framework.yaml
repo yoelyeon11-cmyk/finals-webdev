@@ -28,6 +28,9 @@ when@prod:
             cookie_secure: auto
             cookie_samesite: lax
             cookie_httponly: true
+            gc_maxlifetime: 86400
+            cookie_lifetime: 86400
+            save_path: '%kernel.project_dir%/var/sessions'
 
 when@test:
     framework:

@@ -40,6 +40,9 @@ fi
 echo "[railway] Running migrations..."
 php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 
+mkdir -p var/sessions/prod var/sessions/dev
+chmod -R 775 var/sessions 2>/dev/null || true
+
 echo "[railway] Repairing product images if upload files are missing..."
 php bin/console app:fix-product-images --no-interaction 2>/dev/null || true
 

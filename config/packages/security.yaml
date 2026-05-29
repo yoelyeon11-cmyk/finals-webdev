@@ -49,21 +49,18 @@ security:
                 check_path: app_login
                 success_handler: App\Security\LoginSuccessHandler
                 enable_csrf: true
+
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800
+                path: /
+                always_remember_me: true
             
             logout:
                 path: app_logout
                 target: app_login
-                # --- SECURITY UPDATES START HERE ---
-                # 1. Force the server to destroy the session
                 invalidate_session: true
-                # 2. Instruct the browser to delete the session cookie
-                delete_cookies: ['PHPSESSID']
-                # 3. Modern header to wipe all client-side data (Cookies, LocalStorage, etc.)
-                clear_site_data:
-                    - cookies
-                    - storage
-                    - cache
-                # --- SECURITY UPDATES END HERE ---
+                delete_cookies: ['PHPSESSID', 'REMEMBERME']
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
