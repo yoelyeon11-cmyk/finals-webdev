@@ -23,7 +23,9 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
+    App\Session\PdoSessionHandlerFactory: ~
+
     Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler:
+        factory: ['@App\Session\PdoSessionHandlerFactory', 'create']
         arguments:
             - '@doctrine.dbal.default_connection'
-            - { db_table: 'sessions', db_id_col: 'sess_id', db_data_col: 'sess_data', db_lifetime_col: 'sess_lifetime', db_time_col: 'sess_time', lock_mode: 0 }
