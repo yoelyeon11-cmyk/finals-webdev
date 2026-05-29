@@ -12,6 +12,7 @@ use App\Repository\OrderRepository;
 use App\Repository\ProductsRepository;
 use App\Service\OrderRealtimeEventStore;
 use App\Service\RealtimeBroadcastClient;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -57,7 +58,6 @@ final class CustomerController extends AbstractController
     public function createOrder(
         Request $request,
         EntityManagerInterface $em,
-        ProductsRepository $productsRepository,
         RealtimeBroadcastClient $realtimeBroadcast,
     ): JsonResponse {
         $user = $this->requireUser();
@@ -76,35 +76,88 @@ final class CustomerController extends AbstractController
             return $this->error('validation_error', 'shippingAddress is required.', 422);
         }
 
-        $lines = [];
-        $total = 0.0;
-
+        $quantitiesByProductId = [];
         foreach ($items as $item) {
             $productId = (int) ($item['productId'] ?? 0);
+            if ($productId <= 0) {
+                return $this->error('validation_error', 'Each cart item must include a valid productId.', 422);
+            }
             $quantity = max(1, (int) ($item['quantity'] ?? 1));
-
-            /** @var Products|null $product */
-            $product = $productId > 0 ? $productsRepository->find($productId) : null;
-            $name = $product?->getName() ?? trim((string) ($item['name'] ?? 'Item'));
-            $price = (float) ($product?->getPrice() ?? $item['price'] ?? 0);
-            $lineTotal = $price * $quantity;
-            $total += $lineTotal;
-            $lines[] = sprintf('%s x%d (₱%.2f)', $name, $quantity, $lineTotal);
+            $quantitiesByProductId[$productId] = ($quantitiesByProductId[$productId] ?? 0) + $quantity;
         }
 
-        $order = new Order();
-        $order->setCustomerName($user->getFullName() ?? $user->getUsername() ?? 'Customer');
-        $order->setCustomerEmail($user->getEmail());
-        $order->setCustomerPhone($customerPhone !== '' ? $customerPhone : null);
-        $order->setItemsDescription(implode('; ', $lines));
-        $order->setTotalAmount(number_format($total, 2, '.', ''));
-        $order->setPaymentMethod($paymentMethod);
-        $order->setShippingAddress($shippingAddress);
-        $order->setStatus('new_order');
-        $order->setCreatedBy($user);
+        $lines = [];
+        $total = 0.0;
+        $updatedProducts = [];
 
-        $em->persist($order);
-        $em->flush();
+        $em->beginTransaction();
+        try {
+            foreach ($quantitiesByProductId as $productId => $quantity) {
+                /** @var Products|null $product */
+                $product = $em->find(Products::class, $productId, LockMode::PESSIMISTIC_WRITE);
+                if (!$product) {
+                    $em->rollback();
+
+                    return $this->error('not_found', sprintf('Product #%d not found.', $productId), 404);
+                }
+
+                $available = $product->getStock() ?? 0;
+                if ($quantity > $available) {
+                    $em->rollback();
+
+                    return $this->error(
+                        'insufficient_stock',
+                        sprintf(
+                            'Not enough stock for %s (requested %d, available %d).',
+                            $product->getName(),
+                            $quantity,
+                            $available,
+                        ),
+                        422,
+                    );
+                }
+
+                $product->setStock($available - $quantity);
+                $updatedProducts[$productId] = $product;
+
+                $price = (float) $product->getPrice();
+                $lineTotal = $price * $quantity;
+                $total += $lineTotal;
+                $lines[] = sprintf('%s x%d (₱%.2f)', $product->getName(), $quantity, $lineTotal);
+            }
+
+            $order = new Order();
+            $order->setCustomerName($user->getFullName() ?? $user->getUsername() ?? 'Customer');
+            $order->setCustomerEmail($user->getEmail());
+            $order->setCustomerPhone($customerPhone !== '' ? $customerPhone : null);
+            $order->setItemsDescription(implode('; ', $lines));
+            $order->setTotalAmount(number_format($total, 2, '.', ''));
+            $order->setPaymentMethod($paymentMethod);
+            $order->setShippingAddress($shippingAddress);
+            $order->setStatus('new_order');
+            $order->setCreatedBy($user);
+
+            $em->persist($order);
+            $em->flush();
+            $em->commit();
+        } catch (\Throwable) {
+            if ($em->getConnection()->isTransactionActive()) {
+                $em->rollback();
+            }
+
+            return $this->error('order_failed', 'Could not place order. Please try again.', 500);
+        }
+
+        foreach ($updatedProducts as $product) {
+            $realtimeBroadcast->publish('inventory.updated', [
+                'productId' => $product->getId(),
+                'stock' => $product->getStock(),
+            ]);
+            $realtimeBroadcast->publish('product.updated', [
+                'productId' => $product->getId(),
+                'name' => $product->getName(),
+            ]);
+        }
         $realtimeBroadcast->publish('order.created', [
             'orderId' => $order->getId(),
             'transactionId' => $order->getTransactionId(),
